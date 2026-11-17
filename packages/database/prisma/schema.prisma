@@ -1,0 +1,354 @@
+// Skema inti MVP Smart Livestock Ecosystem.
+// Mengikuti dokumen "Desain Database MVP": UUID, timestamptz UTC, organization_id pada tabel bertenant.
+// Yang TIDAK bisa dinyatakan di Prisma (RLS, CHECK, view, trigger, grant) ada di prisma/sql/*.sql.
+//
+// Belum ada di skema ini (menyusul sesuai dokumen): breeds, farm_sites, animal_identifiers, movements,
+// feed_types, feed_records, production_records, health_records, tasks, attachments, report_jobs,
+// notifications, invitations.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("MIGRATION_DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- Enum
+
+enum Role {
+  OWNER
+  MANAGER
+  WORKER
+  VIEWER
+}
+
+enum MembershipStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  BUSINESS
+  ENTERPRISE
+}
+
+enum FarmStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum FacilityType {
+  BARN
+  HOUSE
+  POND
+  PEN
+}
+
+enum TrackingMode {
+  INDIVIDUAL
+  GROUP
+  BOTH
+}
+
+enum Sex {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+enum AnimalStatus {
+  ACTIVE
+  SOLD
+  DEAD
+  CULLED
+  TRANSFERRED
+}
+
+enum BatchStatus {
+  ACTIVE
+  CLOSED
+}
+
+enum BatchEventType {
+  ADDED
+  CULLED
+  SOLD
+  ADJUSTMENT
+}
+
+// Contoh awal; daftar final perlu disetujui bersama peternak pilot.
+enum MortalityCause {
+  DISEASE
+  INJURY
+  PREDATION
+  ENVIRONMENT
+  UNKNOWN
+  OTHER
+}
+
+// ---------------------------------------------------------------- Identity dan tenant
+
+model User {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  email           String       @unique
+  name            String?
+  passwordHash    String?      @map("password_hash")
+  emailVerifiedAt DateTime?    @map("email_verified_at") @db.Timestamptz(6)
+  locale          String       @default("id")
+  isActive        Boolean      @default(true) @map("is_active")
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships     Membership[]
+
+  @@map("users")
+}
+
+model Organization {
+  id           String       @id @default(uuid(7)) @db.Uuid
+  name         String
+  slug         String       @unique
+  countryCode  String       @default("ID") @map("country_code")
+  language     String       @default("id")
+  currencyCode String       @default("IDR") @map("currency_code")
+  timezone     String       @default("Asia/Jakarta")
+  plan         Plan         @default(FREE)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships  Membership[]
+  farms        Farm[]
+
+  @@map("organizations")
+}
+
+model Membership {
+  id             String           @id @default(uuid(7)) @db.Uuid
+  organizationId String           @map("organization_id") @db.Uuid
+  userId         String           @map("user_id") @db.Uuid
+  role           Role
+  status         MembershipStatus @default(ACTIVE)
+  allFarms       Boolean          @default(true) @map("all_farms")
+  createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  farms          MembershipFarm[]
+
+  @@unique([organizationId, userId])
+  @@unique([organizationId, id])
+  @@index([userId])
+  @@map("memberships")
+}
+
+// Daftar farm yang boleh diakses bila memberships.all_farms = false.
+model MembershipFarm {
+  organizationId String     @map("organization_id") @db.Uuid
+  membershipId   String     @map("membership_id") @db.Uuid
+  farmId         String     @map("farm_id") @db.Uuid
+  membership     Membership @relation(fields: [organizationId, membershipId], references: [organizationId, id], onDelete: Cascade)
+  farm           Farm       @relation(fields: [organizationId, farmId], references: [organizationId, id], onDelete: Cascade)
+
+  @@id([membershipId, farmId])
+  @@index([organizationId, farmId])
+  @@map("membership_farms")
+}
+
+model AuditLog {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  actorId        String?  @map("actor_id") @db.Uuid
+  action         String
+  entityType     String   @map("entity_type")
+  entityId       String?  @map("entity_id") @db.Uuid
+  before         Json?
+  after          Json?
+  ipAddress      String?  @map("ip_address")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([organizationId, entityType, entityId])
+  @@map("audit_logs")
+}
+
+// ---------------------------------------------------------------- Spesies, farm, fasilitas
+
+// Referensi global: tidak punya organization_id; tenant hanya boleh membaca.
+model Species {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  code          String           @unique
+  name          String
+  trackingMode  TrackingMode     @map("tracking_mode")
+  metricsConfig Json?            @map("metrics_config")
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  animals       Animal[]
+  batches       LivestockBatch[]
+
+  @@map("species")
+}
+
+model Farm {
+  id              String           @id @default(uuid(7)) @db.Uuid
+  organizationId  String           @map("organization_id") @db.Uuid
+  name            String
+  code            String
+  address         String?
+  timezone        String?
+  status          FarmStatus       @default(ACTIVE)
+  createdBy       String?          @map("created_by") @db.Uuid
+  createdAt       DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime         @updatedAt @map("updated_at") @db.Timestamptz(6)
+  organization    Organization     @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  facilities      Facility[]
+  animals         Animal[]
+  batches         LivestockBatch[]
+  membershipFarms MembershipFarm[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, id])
+  @@map("farms")
+}
+
+model Facility {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  farmId         String       @map("farm_id") @db.Uuid
+  type           FacilityType
+  name           String
+  capacity       Int?
+  status         String       @default("ACTIVE")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  farm           Farm         @relation(fields: [organizationId, farmId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@index([organizationId, farmId])
+  @@map("facilities")
+}
+
+// ---------------------------------------------------------------- Ternak dan batch
+
+model Animal {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  farmId          String       @map("farm_id") @db.Uuid
+  facilityId      String?      @map("facility_id") @db.Uuid
+  speciesId       String       @map("species_id") @db.Uuid
+  code            String
+  name            String?
+  sex             Sex?
+  birthDate       DateTime?    @map("birth_date") @db.Date
+  acquisitionDate DateTime?    @map("acquisition_date") @db.Date
+  status          AnimalStatus @default(ACTIVE)
+  attributes      Json?
+  clientId        String?      @map("client_id") @db.Uuid
+  createdBy       String?      @map("created_by") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  farm            Farm         @relation(fields: [organizationId, farmId], references: [organizationId, id], onDelete: Restrict)
+  species         Species      @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, clientId])
+  @@unique([organizationId, id])
+  @@index([organizationId, farmId, status])
+  @@index([organizationId, speciesId])
+  @@map("animals")
+}
+
+model LivestockBatch {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @map("organization_id") @db.Uuid
+  farmId         String       @map("farm_id") @db.Uuid
+  facilityId     String?      @map("facility_id") @db.Uuid
+  speciesId      String       @map("species_id") @db.Uuid
+  code           String
+  startDate      DateTime     @map("start_date") @db.Date
+  initialCount   Int          @map("initial_count")
+  status         BatchStatus  @default(ACTIVE)
+  closedAt       DateTime?    @map("closed_at") @db.Timestamptz(6)
+  attributes     Json?
+  clientId       String?      @map("client_id") @db.Uuid
+  createdBy      String?      @map("created_by") @db.Uuid
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  farm           Farm         @relation(fields: [organizationId, farmId], references: [organizationId, id], onDelete: Restrict)
+  species        Species      @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+  events         BatchEvent[]
+
+  @@unique([organizationId, code])
+  @@unique([organizationId, clientId])
+  @@unique([organizationId, id])
+  @@index([organizationId, farmId, status])
+  @@map("livestock_batches")
+}
+
+// delta bertanda: positif menambah populasi, negatif mengurangi.
+model BatchEvent {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  batchId        String         @map("batch_id") @db.Uuid
+  eventType      BatchEventType @map("event_type")
+  delta          Int
+  occurredOn     DateTime       @map("occurred_on") @db.Date
+  note           String?
+  recordedBy     String         @map("recorded_by") @db.Uuid
+  clientId       String?        @map("client_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  batch          LivestockBatch @relation(fields: [organizationId, batchId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, batchId, occurredOn])
+  @@map("batch_events")
+}
+
+// ---------------------------------------------------------------- Catatan operasional
+// animal_id dan batch_id: tepat satu terisi (CHECK di prisma/sql/003_constraints.sql).
+
+model WeightRecord {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  animalId       String?   @map("animal_id") @db.Uuid
+  batchId        String?   @map("batch_id") @db.Uuid
+  measuredOn     DateTime  @map("measured_on") @db.Date
+  weightKg       Decimal   @map("weight_kg") @db.Decimal(12, 3)
+  sampleSize     Int?      @map("sample_size")
+  recordedBy     String    @map("recorded_by") @db.Uuid
+  clientId       String?   @map("client_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime? @map("voided_at") @db.Timestamptz(6)
+  voidedBy       String?   @map("voided_by") @db.Uuid
+  voidReason     String?   @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, animalId, measuredOn(sort: Desc)])
+  @@index([organizationId, batchId, measuredOn(sort: Desc)])
+  @@map("weight_records")
+}
+
+model MortalityRecord {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  animalId       String?        @map("animal_id") @db.Uuid
+  batchId        String?        @map("batch_id") @db.Uuid
+  occurredOn     DateTime       @map("occurred_on") @db.Date
+  count          Int            @default(1)
+  cause          MortalityCause @default(UNKNOWN)
+  note           String?
+  recordedBy     String         @map("recorded_by") @db.Uuid
+  clientId       String?        @map("client_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime?      @map("voided_at") @db.Timestamptz(6)
+  voidedBy       String?        @map("voided_by") @db.Uuid
+  voidReason     String?        @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, batchId, occurredOn])
+  @@index([organizationId, animalId])
+  @@map("mortality_records")
+}
