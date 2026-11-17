@@ -23,7 +23,20 @@ export const GET = tenantRoute({ permission: "livestock.read" }, async (c) => {
     take: limit + 1,
     ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
   });
-  return Response.json(pageOf(rows, limit));
+  const page = pageOf(rows, limit);
+
+  // Populasi saat ini dihitung database (view batch_population, tunduk pada RLS).
+  const ids = page.data.map((b) => b.id);
+  const pops = ids.length
+    ? await c.tx.$queryRaw<{ batch_id: string; current_count: bigint }[]>`
+        SELECT batch_id, current_count FROM batch_population WHERE batch_id = ANY(${ids}::uuid[])`
+    : [];
+  const byId = new Map(pops.map((r) => [r.batch_id, Number(r.current_count)]));
+
+  return Response.json({
+    data: page.data.map((b) => ({ ...b, currentCount: byId.get(b.id) ?? b.initialCount })),
+    nextCursor: page.nextCursor,
+  });
 });
 
 // POST /api/v1/batches  (izin livestock.write). Idempoten bila clientId sama dikirim ulang.

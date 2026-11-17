@@ -1,3 +1,6 @@
+import { SESSION_COOKIE, readCookie } from "./cookies";
+import { sessionSecret, verifySession } from "./session-token";
+
 // Antarmuka sesi. Penyedia login (Auth.js atau identity provider terkelola) adalah KEPUTUSAN TERBUKA
 // di dokumen Desain Database. Sampai diputuskan, hanya ada dua penyedia di bawah ini.
 //
@@ -33,18 +36,23 @@ const devSessionProvider: SessionProvider = {
   },
 };
 
-/** Pengganti sampai penyedia login dipilih: tidak ada sesi, semua request ditolak 401. */
-const unconfiguredSessionProvider: SessionProvider = {
-  async getSession() {
-    return null;
+/** Sesi dari cookie bertanda tangan (lihat session-token.ts). Tanpa SESSION_SECRET semua request ditolak 401. */
+const cookieSessionProvider: SessionProvider = {
+  async getSession(req) {
+    const secret = sessionSecret();
+    if (!secret) return null;
+    const token = readCookie(req, SESSION_COOKIE);
+    if (!token) return null;
+    const p = verifySession(token, secret);
+    return p ? { userId: p.uid, activeOrganizationId: p.org } : null;
   },
 };
 
-function selectProvider(): SessionProvider {
+export async function getSession(req: Request): Promise<Session | null> {
   const devEnabled = process.env.ENABLE_DEV_SESSION === "true" && process.env.NODE_ENV !== "production";
-  return devEnabled ? devSessionProvider : unconfiguredSessionProvider;
-}
-
-export function getSession(req: Request): Promise<Session | null> {
-  return selectProvider().getSession(req);
+  if (devEnabled) {
+    const dev = await devSessionProvider.getSession(req);
+    if (dev) return dev;
+  }
+  return cookieSessionProvider.getSession(req);
 }

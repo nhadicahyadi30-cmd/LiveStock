@@ -1,6 +1,7 @@
 // Seed referensi global (species). Dijalankan sebagai migrator karena app_user hanya boleh membaca species.
 // Aman dijalankan berulang (upsert berdasarkan code).
 import { PrismaClient, TrackingMode } from "@prisma/client";
+import { hashPassword } from "../src/password";
 
 const url = process.env.MIGRATION_DATABASE_URL;
 if (!url) {
@@ -42,7 +43,13 @@ async function seedDemo(): Promise<void> {
   await prisma.user.upsert({
     where: { id: DEMO.userId },
     update: {},
-    create: { id: DEMO.userId, email: "demo@example.test", name: "Pengguna Demo" },
+    // Kata sandi demo hanya untuk pengembangan lokal. Ganti lewat SEED_DEMO_PASSWORD.
+    create: {
+      id: DEMO.userId,
+      email: "demo@example.test",
+      name: "Pengguna Demo",
+      passwordHash: await hashPassword(process.env.SEED_DEMO_PASSWORD ?? "demo12345"),
+    },
   });
 
   // migrator juga tunduk pada RLS (FORCE), jadi konteks tenant diset seperti di aplikasi.

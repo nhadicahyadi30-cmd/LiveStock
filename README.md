@@ -34,6 +34,10 @@ SEED_DEMO=true pnpm db:seed   # opsional: organisasi dan farm demo
 pnpm dev                   # http://localhost:3000
 ```
 
+Antarmuka: buka http://localhost:3000, masuk dengan akun demo (`demo@example.test` / `demo12345`, dibuat oleh
+`SEED_DEMO=true pnpm db:seed`). Isi `SESSION_SECRET` di `.env.local` (minimal 32 karakter, `openssl rand -base64 48`).
+Halaman: Beranda, Catat (bobot dan kematian, dengan antrean offline), Ternak (batch dan farm).
+
 Mencoba API dengan sesi pengembangan (hanya aktif bila `ENABLE_DEV_SESSION=true` dan bukan production):
 
 ```bash
@@ -106,9 +110,13 @@ Butuh PostgreSQL 15 atau lebih baru (`security_invoker` pada view).
 
 ## Yang masih terbuka
 
-- **Penyedia login.** `session.ts` hanya punya penyedia dev dan penyedia kosong (semua request 401). Pilih Auth.js atau
-  identity provider terkelola, lalu implementasikan `SessionProvider`. Setelah itu aktifkan RLS untuk tabel `users`
-  (lihat TODO di `001_rls.sql`) dan buat fungsi `SECURITY DEFINER` untuk pencarian email saat login.
+- **Login.** Sementara memakai email + kata sandi (scrypt) dan cookie sesi bertanda tangan HMAC tanpa library tambahan
+  (`session-token.ts`, `/api/v1/auth/*`). Belum ada: pembatasan percobaan login, registrasi, reset kata sandi,
+  verifikasi email, dan pencabutan sesi per perangkat. Tabel `users` masih tanpa RLS dan dibaca langsung saat login;
+  aktifkan RLS dan buat fungsi `SECURITY DEFINER` untuk pencarian email (lihat TODO di `001_rls.sql`).
+  Bila nanti pindah ke Auth.js atau penyedia terkelola, cukup ganti `SessionProvider`.
+- **Offline.** Antrean memakai localStorage (`lib/offline-queue.ts`) dan hanya terkirim saat aplikasi terbuka.
+  Service worker, IndexedDB, dan ikon PWA belum ada. Tailwind dan shadcn/ui belum dipakai; gaya masih CSS biasa.
 - **`ENABLE_DEV_SESSION` wajib mati** di staging dan production. Guard menolaknya bila `NODE_ENV=production`,
   tetapi jangan bergantung pada itu saja.
 - **Model Prisma yang belum ada:** pakan, produksi, kesehatan, tugas, perpindahan, lampiran, laporan, notifikasi,

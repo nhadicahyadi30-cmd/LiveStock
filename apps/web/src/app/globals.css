@@ -1,0 +1,22 @@
+:root { --bg:#f6f7f4; --card:#fff; --ink:#1d2a1f; --muted:#667267; --line:#dfe4dc; --brand:#2f6b3a; --brand-ink:#fff; --warn:#b4540a; --danger:#b3261e; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif; }
+main.page { max-width: 720px; margin: 0 auto; padding: 16px 16px 88px; }
+h1 { font-size: 1.35rem; margin: 4px 0 12px; } h2 { font-size: 1.05rem; margin: 20px 0 8px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:10px; }
+.row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.muted { color:var(--muted); font-size:.9rem; }
+.num { font-size:1.6rem; font-weight:700; }
+label { display:block; font-size:.9rem; margin:10px 0 4px; color:var(--muted); }
+input, select, textarea { width:100%; padding:12px; font:inherit; border:1px solid var(--line); border-radius:10px; background:#fff; min-height:44px; }
+button { font:inherit; min-height:44px; padding:10px 16px; border-radius:10px; border:1px solid var(--brand); background:var(--brand); color:var(--brand-ink); cursor:pointer; }
+button.ghost { background:transparent; color:var(--brand); }
+button:disabled { opacity:.55; cursor:default; }
+.stack > * + * { margin-top: 10px; }
+.msg { padding:10px 12px; border-radius:10px; font-size:.92rem; margin-top:10px; }
+.msg.ok { background:#e6f2e8; } .msg.warn { background:#fdf0e3; color:var(--warn); } .msg.err { background:#fbe9e7; color:var(--danger); }
+.seg { display:flex; gap:8px; } .seg button { flex:1; } .seg button:not(.on) { background:transparent; color:var(--brand); }
+nav.bottom { position:fixed; bottom:0; left:0; right:0; display:flex; background:var(--card); border-top:1px solid var(--line); }
+nav.bottom a { flex:1; text-align:center; padding:14px 4px; text-decoration:none; color:var(--muted); font-size:.9rem; }
+nav.bottom a.on { color:var(--brand); font-weight:600; }
+.pill { font-size:.75rem; padding:2px 8px; border-radius:99px; background:#eef1ec; color:var(--muted); }
