@@ -481,3 +481,46 @@ model AuthToken {
   @@index([targetOrgId])
   @@map("auth_tokens")
 }
+
+// ---------------------------------------------------------------- Tahap 2: Kesehatan
+
+enum HealthKind {
+  VACCINATION
+  TREATMENT
+  QUARANTINE
+}
+
+enum HealthStatus {
+  PLANNED
+  ACTIVE
+  DONE
+}
+
+/// Satu tabel untuk vaksinasi (jadwal -> selesai), pengobatan (berjalan -> selesai), dan karantina.
+model HealthRecord {
+  id              String       @id @default(uuid(7)) @db.Uuid
+  organizationId  String       @map("organization_id") @db.Uuid
+  batchId         String       @map("batch_id") @db.Uuid
+  kind            HealthKind
+  status          HealthStatus
+  title           String
+  medicine        String?
+  dose            String?
+  affectedCount   Int?         @map("affected_count")
+  eventOn         DateTime     @map("event_on") @db.Date
+  doneOn          DateTime?    @map("done_on") @db.Date
+  withdrawalUntil DateTime?    @map("withdrawal_until") @db.Date
+  cost            Decimal?     @db.Decimal(14, 2)
+  note            String?
+  recordedBy      String       @map("recorded_by") @db.Uuid
+  clientId        String?      @map("client_id") @db.Uuid
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt        DateTime?    @map("voided_at") @db.Timestamptz(6)
+  voidedBy        String?      @map("voided_by") @db.Uuid
+  voidReason      String?      @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, batchId, eventOn(sort: Desc)])
+  @@index([organizationId, kind, status])
+  @@map("health_records")
+}

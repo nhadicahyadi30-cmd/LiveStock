@@ -12,6 +12,7 @@ interface Summary {
   mortalitySeries: { date: string; count: number }[];
   byBatch: { id: string; code: string; population: number }[];
   feedKg30d?: number; feedCost30d?: number; production30d?: Record<string, number>;
+  health?: { vaccinationsDue: { id: string; title: string; eventOn: string }[]; quarantineActive: number; withdrawalActive: number };
   dueTasks?: { id: string; title: string; dueOn: string }[];
   recent: { id: string; type: "weight" | "mortality"; at: string; label: string; detail: string }[];
 }
@@ -63,6 +64,14 @@ export default function DashboardPage() {
           <div className="card kpi"><div className="kpi-top">Pakan 30 hari<span className="kpi-ic amber"><Icon name="farm" size={18} /></span></div><div className="kpi-v">{fmt(Math.round(s.feedKg30d ?? 0))}<span className="muted" style={{ fontSize: 16 }}> kg</span></div><div className="kpi-s">Rp {fmt(Math.round(s.feedCost30d ?? 0))} · <Link href="/app/pakan">detail</Link></div></div>
           <div className="card kpi"><div className="kpi-top">Produksi 30 hari<span className="kpi-ic blue"><Icon name="chart" size={18} /></span></div><div className="kpi-v">{fmt(Math.round(s.production30d?.EGG ?? 0))}<span className="muted" style={{ fontSize: 16 }}> butir</span></div><div className="kpi-s">{fmt(Math.round(s.production30d?.MILK ?? 0))} liter susu · {fmt(Math.round(s.production30d?.HARVEST ?? 0))} kg panen · <Link href="/app/produksi">detail</Link></div></div>
           <div className="card kpi"><div className="kpi-top">Tugas jatuh tempo<span className="kpi-ic red"><Icon name="check" size={18} /></span></div><div className="kpi-v">{fmt(s.dueTasks?.length ?? 0)}</div><div className="kpi-s">{s.dueTasks?.[0] ? `${s.dueTasks[0].title} · ` : "Tidak ada yang mendesak · "}<Link href="/app/tugas">lihat</Link></div></div>
+        </div>
+      )}
+
+      {s?.health && (
+        <div className="grid g3 mt-2">
+          <div className="card kpi"><div className="kpi-top">Vaksinasi 7 hari ke depan<span className="kpi-ic blue"><Icon name="shield" size={18} /></span></div><div className="kpi-v">{fmt(s.health.vaccinationsDue.length)}</div><div className="kpi-s">{s.health.vaccinationsDue[0] ? `${s.health.vaccinationsDue[0].title} · ` : "Tidak ada jadwal mendesak · "}<Link href="/app/kesehatan">lihat</Link></div></div>
+          <div className="card kpi"><div className="kpi-top">Karantina aktif<span className="kpi-ic red"><Icon name="alert" size={18} /></span></div><div className="kpi-v">{fmt(s.health.quarantineActive)}</div><div className="kpi-s">batch sedang dikarantina</div></div>
+          <div className="card kpi"><div className="kpi-top">Masa henti obat<span className="kpi-ic amber"><Icon name="heart" size={18} /></span></div><div className="kpi-v">{fmt(s.health.withdrawalActive)}</div><div className="kpi-s">jangan dijual/dipanen dulu</div></div>
         </div>
       )}
 

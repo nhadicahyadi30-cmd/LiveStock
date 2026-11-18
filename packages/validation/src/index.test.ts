@@ -58,7 +58,7 @@ describe("mortalityRecordCreate", () => {
   });
 });
 
-import { batchEventCreate, batchEventDelta, feedRecordCreate, productionRecordCreate, taskCreate } from "./index";
+import { batchEventCreate, batchEventDelta, feedRecordCreate, productionRecordCreate, taskCreate, healthRecordCreate } from "./index";
 
 describe("tahap 1", () => {
   const id = "0192f0a0-0000-7000-8000-00000000d003";
@@ -80,5 +80,18 @@ describe("tahap 1", () => {
   it("tugas butuh judul dan tanggal", () => {
     expect(taskCreate.safeParse({ title: " ", dueOn: "2026-01-01" }).success).toBe(false);
     expect(taskCreate.safeParse({ title: "Vaksin", dueOn: "2026-01-01" }).success).toBe(true);
+  });
+});
+
+describe("tahap 2: kesehatan", () => {
+  const base = { batchId: "0192f3a0-0000-7000-8000-000000000001", title: "ND-IB" };
+  it("vaksinasi boleh dijadwalkan di masa depan", () => {
+    expect(healthRecordCreate.safeParse({ ...base, kind: "VACCINATION", eventOn: "2099-01-01" }).success).toBe(true);
+  });
+  it("pengobatan tidak boleh dimulai di masa depan", () => {
+    expect(healthRecordCreate.safeParse({ ...base, kind: "TREATMENT", eventOn: "2099-01-01" }).success).toBe(false);
+  });
+  it("masa henti obat tidak boleh sebelum mulai", () => {
+    expect(healthRecordCreate.safeParse({ ...base, kind: "TREATMENT", eventOn: "2024-05-10", withdrawalUntil: "2024-05-01" }).success).toBe(false);
   });
 });

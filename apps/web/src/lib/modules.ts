@@ -152,19 +152,19 @@ export const PILLARS: Pillar[] = [
     "modules": [
       {
         "name": "Jadwal dan catatan vaksinasi",
-        "status": "planned",
+        "status": "progress",
         "phase": 2,
         "note": ""
       },
       {
         "name": "Pengobatan dan rekam medis",
-        "status": "planned",
+        "status": "progress",
         "phase": 2,
         "note": ""
       },
       {
         "name": "Karantina dan biosekuriti",
-        "status": "planned",
+        "status": "progress",
         "phase": 2,
         "note": ""
       },

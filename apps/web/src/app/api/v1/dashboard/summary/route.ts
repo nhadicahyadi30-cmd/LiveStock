@@ -54,6 +54,13 @@ export const GET = tenantRoute({ permission: "dashboard.read" }, async (c) => {
     take: 5,
   });
 
+  const soon = new Date(Date.now() + 7 * DAY);
+  const [vaccDue, quarantineActive, withdrawalActive] = await Promise.all([
+    c.tx.healthRecord.findMany({ where: { voidedAt: null, kind: "VACCINATION", status: "PLANNED", eventOn: { lte: soon }, ...feedTarget }, orderBy: { eventOn: "asc" }, take: 5 }),
+    c.tx.healthRecord.count({ where: { voidedAt: null, kind: "QUARANTINE", status: "ACTIVE", ...feedTarget } }),
+    c.tx.healthRecord.count({ where: { voidedAt: null, kind: "TREATMENT", withdrawalUntil: { gte: new Date(new Date().toISOString().slice(0, 10)) }, ...feedTarget } }),
+  ]);
+
   const recentW = await c.tx.weightRecord.findMany({ where: { voidedAt: null, ...target }, orderBy: { createdAt: "desc" }, take: 6 });
   const recentM = await c.tx.mortalityRecord.findMany({ where: { voidedAt: null, ...target }, orderBy: { createdAt: "desc" }, take: 6 });
   const codeBatch = new Map(batches.map((b) => [b.id, b.code]));
@@ -81,6 +88,7 @@ export const GET = tenantRoute({ permission: "dashboard.read" }, async (c) => {
       feedKg30d: feedRows.reduce((n, r) => n + Number(r.quantityKg), 0),
       feedCost30d: feedRows.reduce((n, r) => n + Number(r.costTotal ?? 0), 0),
       production30d,
+      health: { vaccinationsDue: vaccDue.map((v) => ({ id: v.id, title: v.title, eventOn: v.eventOn })), quarantineActive, withdrawalActive },
       dueTasks: dueTasksRaw.map((t) => ({ id: t.id, title: t.title, dueOn: t.dueOn })),
     },
   });

@@ -46,9 +46,9 @@ Pencatatan dan pengelolaan peternakan harian.
 
 Vaksin, pengobatan, dan pencegahan penyakit.
 
-- [ ] Jadwal dan catatan vaksinasi (Tahap 2)
-- [ ] Pengobatan dan rekam medis (Tahap 2)
-- [ ] Karantina dan biosekuriti (Tahap 2)
+- [~] Jadwal dan catatan vaksinasi (Tahap 2)
+- [~] Pengobatan dan rekam medis (Tahap 2)
+- [~] Karantina dan biosekuriti (Tahap 2)
 - [ ] Konsultasi dokter hewan (Tahap 2)
 
 ## Marketplace

@@ -172,3 +172,34 @@ export const taskUpdate = z
     assignedTo: uuid.nullable().optional(),
   });
 export type TaskUpdate = z.infer<typeof taskUpdate>;
+
+// ---------------------------------------------------------------- Tahap 2: Kesehatan
+
+export const healthKinds = ["VACCINATION", "TREATMENT", "QUARANTINE"] as const;
+const anyDate = z.coerce.date();
+
+/**
+ * Catatan kesehatan satu batch.
+ * - VACCINATION: eventOn = tanggal jadwal (boleh di masa depan); selesai bila doneOn diisi.
+ * - TREATMENT / QUARANTINE: eventOn = tanggal mulai, aktif sampai ditandai selesai.
+ */
+export const healthRecordCreate = z
+  .object({
+    batchId: uuid,
+    kind: z.enum(healthKinds),
+    title: z.string().trim().min(1).max(160),
+    medicine: z.string().trim().max(120).optional(),
+    dose: z.string().trim().max(120).optional(),
+    affectedCount: z.number().int().positive().max(10_000_000).optional(),
+    eventOn: anyDate,
+    done: z.boolean().optional(),
+    withdrawalUntil: anyDate.optional(),
+    cost: money.optional(),
+    note: z.string().trim().max(500).optional(),
+    clientId,
+  })
+  .refine((v) => v.kind === "VACCINATION" || v.eventOn.getTime() <= Date.now() + 24 * 60 * 60 * 1000, { message: "Tanggal mulai tidak boleh di masa depan", path: ["eventOn"] })
+  .refine((v) => !v.withdrawalUntil || v.withdrawalUntil >= v.eventOn, { message: "Masa henti obat tidak boleh sebelum tanggal mulai", path: ["withdrawalUntil"] });
+export type HealthRecordCreate = z.infer<typeof healthRecordCreate>;
+
+export const healthRecordComplete = z.object({ doneOn: anyDate.optional() });
