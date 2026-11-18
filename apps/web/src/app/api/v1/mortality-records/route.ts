@@ -1,5 +1,6 @@
 import { mortalityRecordCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
+import { ApiError } from "@/server/errors";
 import { resolveTarget } from "@/server/record-target";
 import { tenantRoute } from "@/server/tenant-guard";
 
@@ -16,6 +17,12 @@ export const POST = tenantRoute({ permission: "records.create" }, async (c) => {
       where: { organizationId_clientId: { organizationId: c.organizationId, clientId: input.clientId } },
     });
     if (existing) return Response.json({ data: existing }, { status: 200 });
+  }
+
+  if (input.batchId) {
+    const pop = await c.tx.$queryRaw<{ current_count: bigint }[]>`SELECT current_count FROM batch_population WHERE batch_id = ${input.batchId}::uuid`;
+    const current = Number(pop[0]?.current_count ?? 0);
+    if (input.count > current) throw new ApiError(409, "POPULATION_NEGATIVE", `Jumlah melebihi populasi saat ini (${current} ekor)`);
   }
 
   const record = await c.tx.mortalityRecord.create({

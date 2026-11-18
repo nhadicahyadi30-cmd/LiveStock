@@ -57,3 +57,28 @@ describe("mortalityRecordCreate", () => {
     expect(mortalityRecordCreate.safeParse({ batchId: id, occurredOn: "2026-11-01", count: 1.5 }).success).toBe(false);
   });
 });
+
+import { batchEventCreate, batchEventDelta, feedRecordCreate, productionRecordCreate, taskCreate } from "./index";
+
+describe("tahap 1", () => {
+  const id = "0192f0a0-0000-7000-8000-00000000d003";
+  it("delta perpindahan: jual dan afkir mengurangi, tambah menambah", () => {
+    expect(batchEventDelta({ eventType: "SOLD", count: 10 })).toBe(-10);
+    expect(batchEventDelta({ eventType: "CULLED", count: 3 })).toBe(-3);
+    expect(batchEventDelta({ eventType: "ADDED", count: 5 })).toBe(5);
+    expect(batchEventDelta({ eventType: "ADJUSTMENT", count: 2, increase: false })).toBe(-2);
+  });
+  it("koreksi wajib menyebut arah", () => {
+    expect(batchEventCreate.safeParse({ eventType: "ADJUSTMENT", count: 1, occurredOn: "2026-01-01" }).success).toBe(false);
+    expect(batchEventCreate.safeParse({ eventType: "SOLD", count: 1, occurredOn: "2026-01-01" }).success).toBe(true);
+  });
+  it("pakan dan produksi menolak jumlah nol atau negatif", () => {
+    expect(feedRecordCreate.safeParse({ batchId: id, feedName: "Pelet", givenOn: "2026-01-01", quantityKg: 0 }).success).toBe(false);
+    expect(productionRecordCreate.safeParse({ batchId: id, kind: "EGG", quantity: -1, producedOn: "2026-01-01" }).success).toBe(false);
+    expect(productionRecordCreate.safeParse({ batchId: id, kind: "EGG", quantity: 120, producedOn: "2026-01-01" }).success).toBe(true);
+  });
+  it("tugas butuh judul dan tanggal", () => {
+    expect(taskCreate.safeParse({ title: " ", dueOn: "2026-01-01" }).success).toBe(false);
+    expect(taskCreate.safeParse({ title: "Vaksin", dueOn: "2026-01-01" }).success).toBe(true);
+  });
+});

@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Line } from "@/components/charts";
 import { Icon } from "@/components/icons";
 import { Empty, Modal, Skeleton, Spinner, fmt, fmtDate, useToast } from "@/components/ui";
@@ -9,7 +9,9 @@ import { api, ApiFailure } from "@/lib/api";
 
 interface Weight { id: string; measuredOn: string; weightKg: number; sampleSize: number | null; voidedAt: string | null; voidReason: string | null }
 interface Mortality { id: string; occurredOn: string; count: number; cause: string; note: string | null; voidedAt: string | null; voidReason: string | null }
-interface Detail { batch: { id: string; code: string; status: string; startDate: string; initialCount: number; currentCount: number }; weights: Weight[]; mortalities: Mortality[] }
+interface BEvent { id: string; eventType: string; delta: number; occurredOn: string; note: string | null }
+interface Detail { batch: { id: string; code: string; status: string; startDate: string; initialCount: number; currentCount: number }; weights: Weight[]; mortalities: Mortality[]; events?: BEvent[] }
+const EVT: Record<string, string> = { SOLD: "Terjual", CULLED: "Afkir", ADDED: "Penambahan", ADJUSTMENT: "Koreksi" };
 const CAUSE: Record<string, string> = { DISEASE: "Penyakit", INJURY: "Cedera", PREDATION: "Predator", ENVIRONMENT: "Lingkungan", UNKNOWN: "Tidak diketahui", OTHER: "Lainnya" };
 
 export default function BatchDetailPage() {
@@ -20,6 +22,7 @@ export default function BatchDetailPage() {
   const [target, setTarget] = useState<{ kind: "weight" | "mortality"; id: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const load = useCallback(() => api<{ data: Detail }>(`/batches/${id}`).then((r) => setD(r.data)).catch((e: Error) => setError(e.message)), [id]);
   useEffect(() => { void load(); }, [load]);
@@ -32,6 +35,16 @@ export default function BatchDetailPage() {
       toast({ kind: "ok", title: "Catatan dibatalkan" }); setTarget(null); await load();
     } catch (e) { setErr(e instanceof ApiFailure && e.status === 403 ? "Anda tidak boleh membatalkan catatan ini (petugas hanya 24 jam untuk catatan sendiri)." : e instanceof Error ? e.message : "Gagal"); }
     finally { setBusy(false); }
+  }
+
+  async function move(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setBusy(true); setErr(null);
+    const f = new FormData(e.currentTarget);
+    const eventType = String(f.get("eventType"));
+    try {
+      await api(`/batches/${id}/events`, { body: { eventType, count: Number(f.get("count")), occurredOn: f.get("date"), note: f.get("note") || undefined, ...(eventType === "ADJUSTMENT" ? { increase: f.get("direction") === "up" } : {}), clientId: crypto.randomUUID() } });
+      setMoveOpen(false); toast({ kind: "ok", title: "Perpindahan populasi dicatat" }); await load();
+    } catch (x) { setErr(x instanceof ApiFailure ? x.message : "Gagal menyimpan"); } finally { setBusy(false); }
   }
 
   if (error) return <main className="page"><div className="alert err">{error}</div><Link href="/app/ternak" className="btn btn-secondary"><Icon name="arrowLeft" size={18} /> Kembali</Link></main>;
@@ -47,7 +60,7 @@ export default function BatchDetailPage() {
       <Link href="/app/ternak" className="sm row" style={{ marginBottom: 12 }}><Icon name="arrowLeft" size={16} /> Semua batch</Link>
       <div className="page-h">
         <div><h1>{d.batch.code} <span className={`badge dot ${d.batch.status === "ACTIVE" ? "ok" : ""}`} style={{ verticalAlign: "middle" }}>{d.batch.status === "ACTIVE" ? "Aktif" : "Ditutup"}</span></h1><p>Mulai {fmtDate(d.batch.startDate)}</p></div>
-        <Link href="/app/catat" className="btn btn-primary"><Icon name="plus" size={18} /> Tambah catatan</Link>
+        <div className="row" style={{ gap: 8 }}>{d.batch.status === "ACTIVE" && <button className="btn btn-secondary" onClick={() => { setErr(null); setMoveOpen(true); }}>Jual / afkir / tambah</button>}<Link href="/app/catat" className="btn btn-primary"><Icon name="plus" size={18} /> Tambah catatan</Link></div>
       </div>
 
       <div className="grid g4">
@@ -73,6 +86,28 @@ export default function BatchDetailPage() {
               <td className="tr">{m.voidedAt ? <span className="badge" title={m.voidReason ?? ""}>Dibatalkan</span> : <button className="btn btn-ghost btn-sm" onClick={() => { setErr(null); setTarget({ kind: "mortality", id: m.id }); }}>Batalkan</button>}</td></tr>))}</tbody></table></div>}
         </div>
       </div>
+
+      <div className="card mt-2"><div className="card-h"><h3>Perpindahan populasi</h3></div>
+        {!d.events || d.events.length === 0 ? <Empty icon="layers" title="Belum ada penjualan atau penambahan" text="Catat penjualan, afkir, atau penambahan ternak di sini." /> : <div className="table-wrap"><table className="table"><thead><tr><th>Tanggal</th><th>Jenis</th><th className="num">Ekor</th><th>Catatan</th></tr></thead><tbody>
+          {d.events.map((ev) => (<tr key={ev.id}><td>{fmtDate(ev.occurredOn)}</td><td>{EVT[ev.eventType] ?? ev.eventType}</td><td className="num">{ev.delta > 0 ? "+" : ""}{fmt(ev.delta)}</td><td className="muted">{ev.note ?? ""}</td></tr>))}</tbody></table></div>}
+      </div>
+
+      {moveOpen && (
+        <Modal title="Perpindahan populasi" onClose={() => setMoveOpen(false)}>
+          <form onSubmit={(e) => void move(e)} className="stack">
+            <div className="grid g2">
+              <div className="field"><label htmlFor="eventType">Jenis</label><select id="eventType" name="eventType" className="input" defaultValue="SOLD"><option value="SOLD">Terjual</option><option value="CULLED">Afkir</option><option value="ADDED">Penambahan</option><option value="ADJUSTMENT">Koreksi</option></select></div>
+              <div className="field"><label htmlFor="count">Jumlah ekor</label><input id="count" name="count" type="number" inputMode="numeric" min="1" className="input" required /></div>
+            </div>
+            <div className="grid g2">
+              <div className="field"><label htmlFor="date">Tanggal</label><input id="date" name="date" type="date" className="input" defaultValue={new Date().toLocaleDateString("sv-SE")} required /></div>
+              <div className="field"><label htmlFor="direction">Arah (khusus koreksi)</label><select id="direction" name="direction" className="input" defaultValue="down"><option value="down">Mengurangi</option><option value="up">Menambah</option></select></div>
+            </div>
+            <div className="field"><label htmlFor="note">Catatan</label><input id="note" name="note" className="input" maxLength={500} placeholder="opsional" /></div>
+            {err && <div className="alert err" role="alert">{err}</div>}
+            <button type="submit" className="btn btn-primary btn-block" disabled={busy}>{busy ? "Menyimpan…" : "Simpan"}</button>
+          </form>
+        </Modal>)}
 
       {target && (
         <Modal title="Batalkan catatan" onClose={() => setTarget(null)} footer={<><button className="btn btn-secondary" onClick={() => setTarget(null)} type="button">Kembali</button><button className="btn btn-danger" form="f-void" type="submit" disabled={busy}>{busy ? <><Spinner /> Memproses…</> : "Batalkan catatan"}</button></>}>

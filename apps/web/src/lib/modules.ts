@@ -103,31 +103,31 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Pakan dan FCR",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": "Stok pakan, pemberian, konversi pakan."
       },
       {
         "name": "Produksi (telur, susu, panen)",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": ""
       },
       {
         "name": "Perpindahan dan penjualan ternak",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": "Mutasi antar kandang, jual, afkir."
       },
       {
         "name": "Tugas harian dan pengingat",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": ""
       },
       {
         "name": "Notifikasi",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": ""
       },

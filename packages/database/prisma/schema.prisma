@@ -352,3 +352,108 @@ model MortalityRecord {
   @@index([organizationId, animalId])
   @@map("mortality_records")
 }
+
+// ---------------------------------------------------------------- Tahap 1: pakan, produksi, tugas, notifikasi
+// Perpindahan dan penjualan ternak memakai BatchEvent (SOLD, CULLED, ADDED, ADJUSTMENT), bukan tabel baru.
+// Foreign key komposit untuk tabel ini dibuat di prisma/sql/004_phase1.sql (urutan: db push lalu db rls).
+
+enum ProductionKind {
+  EGG
+  MILK
+  HARVEST
+}
+
+enum TaskStatus {
+  OPEN
+  DONE
+}
+
+model FeedType {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  unit           String   @default("kg")
+  createdBy      String?  @map("created_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, id])
+  @@map("feed_types")
+}
+
+model FeedRecord {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  batchId        String    @map("batch_id") @db.Uuid
+  feedTypeId     String    @map("feed_type_id") @db.Uuid
+  givenOn        DateTime  @map("given_on") @db.Date
+  quantityKg     Decimal   @map("quantity_kg") @db.Decimal(12, 3)
+  costTotal      Decimal?  @map("cost_total") @db.Decimal(14, 2)
+  note           String?
+  recordedBy     String    @map("recorded_by") @db.Uuid
+  clientId       String?   @map("client_id") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime? @map("voided_at") @db.Timestamptz(6)
+  voidedBy       String?   @map("voided_by") @db.Uuid
+  voidReason     String?   @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, batchId, givenOn(sort: Desc)])
+  @@map("feed_records")
+}
+
+model ProductionRecord {
+  id             String         @id @default(uuid(7)) @db.Uuid
+  organizationId String         @map("organization_id") @db.Uuid
+  batchId        String         @map("batch_id") @db.Uuid
+  kind           ProductionKind
+  quantity       Decimal        @db.Decimal(14, 3)
+  unit           String
+  producedOn     DateTime       @map("produced_on") @db.Date
+  note           String?
+  recordedBy     String         @map("recorded_by") @db.Uuid
+  clientId       String?        @map("client_id") @db.Uuid
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime?      @map("voided_at") @db.Timestamptz(6)
+  voidedBy       String?        @map("voided_by") @db.Uuid
+  voidReason     String?        @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, batchId, producedOn(sort: Desc)])
+  @@map("production_records")
+}
+
+model Task {
+  id             String     @id @default(uuid(7)) @db.Uuid
+  organizationId String     @map("organization_id") @db.Uuid
+  batchId        String?    @map("batch_id") @db.Uuid
+  title          String
+  description    String?
+  dueOn          DateTime   @map("due_on") @db.Date
+  status         TaskStatus @default(OPEN)
+  assignedTo     String?    @map("assigned_to") @db.Uuid
+  completedAt    DateTime?  @map("completed_at") @db.Timestamptz(6)
+  completedBy    String?    @map("completed_by") @db.Uuid
+  createdBy      String     @map("created_by") @db.Uuid
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([organizationId, status, dueOn])
+  @@index([organizationId, assignedTo, status])
+  @@map("tasks")
+}
+
+model Notification {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  kind           String
+  title          String
+  body           String?
+  href           String?
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([organizationId, userId, readAt, createdAt(sort: Desc)])
+  @@map("notifications")
+}

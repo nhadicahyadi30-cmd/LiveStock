@@ -34,11 +34,11 @@ Pencatatan dan pengelolaan peternakan harian.
 - [x] Ternak individual dan batch (Selesai): Daftar, populasi dihitung otomatis.
 - [x] Bobot dan pertumbuhan (Selesai): Catat bobot; grafik ADG menyusul.
 - [x] Kematian (mortalitas) (Selesai): Per ekor atau per batch, bisa dibatalkan.
-- [ ] Pakan dan FCR (Tahap 1): Stok pakan, pemberian, konversi pakan.
-- [ ] Produksi (telur, susu, panen) (Tahap 1)
-- [ ] Perpindahan dan penjualan ternak (Tahap 1): Mutasi antar kandang, jual, afkir.
-- [ ] Tugas harian dan pengingat (Tahap 1)
-- [ ] Notifikasi (Tahap 1)
+- [~] Pakan dan FCR (Tahap 1): Stok pakan, pemberian, konversi pakan.
+- [~] Produksi (telur, susu, panen) (Tahap 1)
+- [~] Perpindahan dan penjualan ternak (Tahap 1): Mutasi antar kandang, jual, afkir.
+- [~] Tugas harian dan pengingat (Tahap 1)
+- [~] Notifikasi (Tahap 1)
 - [ ] Dashboard dan laporan (PDF/Excel) (Tahap 1): Wireframe dashboard ada di dokumen spesifikasi.
 - [~] PWA dan mode offline penuh (Tahap 1): Antrean offline dasar sudah ada.
 

@@ -5,7 +5,7 @@ import { api, ApiFailure, NetworkFailure } from "./api";
 
 export interface QueuedRecord {
   clientId: string;
-  path: "/weight-records" | "/mortality-records";
+  path: "/weight-records" | "/mortality-records" | "/feed-records" | "/production-records";
   body: Record<string, unknown>;
   queuedAt: string;
   /** Galat validasi dari server; catatan ini tidak dikirim ulang sebelum diperbaiki atau dibuang. */

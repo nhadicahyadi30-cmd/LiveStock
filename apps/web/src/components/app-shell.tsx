@@ -24,10 +24,58 @@ const NAV: { group: string; items: { href: string; label: string; icon: IconName
     { href: "/app", label: "Dashboard", icon: "home" },
     { href: "/app/catat", label: "Catat", icon: "edit" },
     { href: "/app/ternak", label: "Ternak", icon: "layers" },
+    { href: "/app/pakan", label: "Pakan", icon: "farm" },
+    { href: "/app/produksi", label: "Produksi", icon: "chart" },
+    { href: "/app/tugas", label: "Tugas", icon: "check" },
   ] },
   { group: "Pengembangan", items: [{ href: "/app/modul", label: "Semua modul", icon: "grid" }] },
 ];
-const BOTTOM = [NAV[0]!.items[0]!, NAV[0]!.items[1]!, NAV[0]!.items[2]!, NAV[1]!.items[0]!];
+const BOTTOM = [NAV[0]!.items[0]!, NAV[0]!.items[1]!, NAV[0]!.items[5]!, NAV[0]!.items[2]!, NAV[1]!.items[0]!];
+
+interface Notif { id: string; title: string; body: string | null; href: string | null; readAt: string | null }
+
+function Bell() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [items, setItems] = useState<Notif[]>([]);
+  const [unread, setUnread] = useState(0);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const load = () => api<{ data: Notif[]; unread: number }>("/notifications").then((r) => { setItems(r.data); setUnread(r.unread); }).catch(() => undefined);
+  useEffect(() => {
+    void load();
+    const t = setInterval(() => void load(), 60000);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    const h = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    document.addEventListener("mousedown", h);
+    return () => document.removeEventListener("mousedown", h);
+  }, []);
+
+  async function read(id?: string) { await api("/notifications/read", { body: id ? { id } : {} }).catch(() => undefined); await load(); }
+
+  return (
+    <div className="rel" ref={ref}>
+      <button className="icon-btn" aria-label={`Notifikasi${unread ? `, ${unread} belum dibaca` : ""}`} aria-expanded={open} onClick={() => setOpen((o) => !o)} style={{ position: "relative" }}>
+        <Icon name="bell" />
+        {unread > 0 && <span className="pill" style={{ position: "absolute", top: 2, right: 0 }}>{unread > 9 ? "9+" : unread}</span>}
+      </button>
+      {open && (
+        <div className="menu" role="menu" style={{ width: 300, maxHeight: 380, overflowY: "auto" }}>
+          <div className="row" style={{ padding: "8px 10px", justifyContent: "space-between" }}><b>Notifikasi</b>{unread > 0 && <button className="btn btn-ghost btn-sm" onClick={() => void read()}>Tandai dibaca</button>}</div>
+          <div className="sep" />
+          {items.length === 0 && <div className="muted sm" style={{ padding: 12 }}>Belum ada notifikasi.</div>}
+          {items.map((n) => (
+            <button key={n.id} onClick={() => { void read(n.id); setOpen(false); if (n.href) router.push(n.href); }} style={{ display: "block", textAlign: "left", fontWeight: n.readAt ? 400 : 700 }}>
+              <div>{n.title}</div>{n.body && <div className="xs muted">{n.body}</div>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function setTheme(t: "light" | "dark") {
   document.documentElement.setAttribute("data-theme", t);
@@ -111,6 +159,7 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
           <div className="search"><Icon name="search" size={18} /><input className="input" placeholder="Cari batch atau ternak… (buka tab Ternak)" aria-label="Cari" onKeyDown={(e) => { if (e.key === "Enter") router.push(`/app/ternak?q=${encodeURIComponent(e.currentTarget.value)}`); }} /></div>
           <div className="right row" style={{ gap: 4 }}>
             {pending > 0 && <Link href="/app/catat" className="badge warn dot" title="Catatan menunggu dikirim">{pending} menunggu kirim</Link>}
+            <Bell />
             <button className="icon-btn" aria-label={dark ? "Mode terang" : "Mode gelap"} onClick={() => { const n = !dark; setDark(n); setTheme(n ? "dark" : "light"); }}><Icon name={dark ? "sun" : "moon"} /></button>
             <div className="rel" ref={menuRef}>
               <button className="avatar" onClick={() => setMenu((m) => !m)} aria-label="Menu akun" aria-expanded={menu}>{initials || "NT"}</button>

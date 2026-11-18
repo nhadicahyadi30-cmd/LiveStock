@@ -1,3 +1,4 @@
+import { can } from "@sl/permissions";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export const GET = tenantRoute({ permission: "dashboard.read" }, async (c) => {
     ? { OR: [{ batchId: { in: batches.map((b) => b.id) } }, { animalId: { in: animals.map((a) => a.id) } }] }
     : {};
 
+  const feedTarget = restricted ? { batchId: { in: batches.map((b) => b.id) } } : {};
   const since = new Date(Date.now() - 29 * DAY);
   since.setUTCHours(0, 0, 0, 0);
   const mort = await c.tx.mortalityRecord.findMany({ where: { voidedAt: null, occurredOn: { gte: since }, ...target }, select: { occurredOn: true, count: true } });
@@ -37,6 +39,19 @@ export const GET = tenantRoute({ permission: "dashboard.read" }, async (c) => {
   const series = Array.from({ length: 30 }, (_, i) => {
     const date = isoDay(new Date(since.getTime() + i * DAY));
     return { date, count: perDay.get(date) ?? 0 };
+  });
+
+  const feedRows = await c.tx.feedRecord.findMany({ where: { voidedAt: null, givenOn: { gte: since }, ...feedTarget }, select: { quantityKg: true, costTotal: true } });
+  const prodRows = await c.tx.productionRecord.findMany({ where: { voidedAt: null, producedOn: { gte: since }, ...feedTarget }, select: { kind: true, quantity: true } });
+  const production30d = { EGG: 0, MILK: 0, HARVEST: 0 } as Record<string, number>;
+  for (const p of prodRows) production30d[p.kind] = (production30d[p.kind] ?? 0) + Number(p.quantity);
+
+  const today = new Date();
+  today.setUTCHours(23, 59, 59, 999);
+  const dueTasksRaw = await c.tx.task.findMany({
+    where: { status: "OPEN", dueOn: { lte: today }, OR: [{ assignedTo: c.userId }, { assignedTo: null }, ...(can(c.role, "tasks.manage") ? [{ assignedTo: { not: null } }] : [])] },
+    orderBy: { dueOn: "asc" },
+    take: 5,
   });
 
   const recentW = await c.tx.weightRecord.findMany({ where: { voidedAt: null, ...target }, orderBy: { createdAt: "desc" }, take: 6 });
@@ -63,6 +78,10 @@ export const GET = tenantRoute({ permission: "dashboard.read" }, async (c) => {
       mortalitySeries: series,
       byBatch: byBatch.slice(0, 8),
       recent,
+      feedKg30d: feedRows.reduce((n, r) => n + Number(r.quantityKg), 0),
+      feedCost30d: feedRows.reduce((n, r) => n + Number(r.costTotal ?? 0), 0),
+      production30d,
+      dueTasks: dueTasksRaw.map((t) => ({ id: t.id, title: t.title, dueOn: t.dueOn })),
     },
   });
 });

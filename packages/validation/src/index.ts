@@ -93,3 +93,82 @@ export const voidRecord = z.object({
   reason: z.string().trim().min(3).max(300),
 });
 export type VoidRecord = z.infer<typeof voidRecord>;
+
+// ---------------------------------------------------------------- Tahap 1
+
+const money = z.number().nonnegative().max(1_000_000_000_000);
+const feedName = z.string().trim().min(1).max(80);
+
+/** Pemberian pakan untuk satu batch. Jenis pakan dicari lewat nama; bila belum ada, dibuat otomatis. */
+export const feedRecordCreate = z.object({
+  batchId: uuid,
+  feedName,
+  givenOn: pastOrToday,
+  quantityKg: z.number().positive().max(10_000_000),
+  costTotal: money.optional(),
+  note: z.string().trim().max(500).optional(),
+  clientId,
+});
+export type FeedRecordCreate = z.infer<typeof feedRecordCreate>;
+
+export const productionKinds = ["EGG", "MILK", "HARVEST"] as const;
+/** Satuan bawaan tiap jenis produksi. */
+export const PRODUCTION_UNIT: Record<(typeof productionKinds)[number], string> = { EGG: "butir", MILK: "liter", HARVEST: "kg" };
+
+export const productionRecordCreate = z.object({
+  batchId: uuid,
+  kind: z.enum(productionKinds),
+  quantity: z.number().positive().max(100_000_000),
+  producedOn: pastOrToday,
+  note: z.string().trim().max(500).optional(),
+  clientId,
+});
+export type ProductionRecordCreate = z.infer<typeof productionRecordCreate>;
+
+/** Perpindahan populasi batch: jual, afkir, tambah, atau koreksi. Tanda delta ditentukan dari jenisnya. */
+export const batchEventTypes = ["SOLD", "CULLED", "ADDED", "ADJUSTMENT"] as const;
+export const batchEventCreate = z
+  .object({
+    eventType: z.enum(batchEventTypes),
+    count: z.number().int().positive().max(10_000_000),
+    /** Hanya dipakai untuk ADJUSTMENT: true = menambah populasi, false = mengurangi. */
+    increase: z.boolean().optional(),
+    occurredOn: pastOrToday,
+    note: z.string().trim().max(500).optional(),
+    clientId,
+  })
+  .refine((v) => v.eventType !== "ADJUSTMENT" || v.increase !== undefined, {
+    message: "Koreksi harus menyebut menambah atau mengurangi",
+    path: ["increase"],
+  });
+export type BatchEventCreate = z.infer<typeof batchEventCreate>;
+
+/** Delta bertanda untuk sebuah perpindahan populasi. */
+export function batchEventDelta(v: Pick<BatchEventCreate, "eventType" | "count" | "increase">): number {
+  if (v.eventType === "ADDED") return v.count;
+  if (v.eventType === "ADJUSTMENT") return v.increase ? v.count : -v.count;
+  return -v.count; // SOLD, CULLED
+}
+
+const dateOnly = z.coerce.date();
+export const taskCreate = z.object({
+  title: z.string().trim().min(1).max(160),
+  description: z.string().trim().max(1000).optional(),
+  dueOn: dateOnly,
+  batchId: uuid.optional(),
+  assignedTo: uuid.optional(),
+});
+export type TaskCreate = z.infer<typeof taskCreate>;
+
+export const taskUpdate = z
+  .object({
+    status: z.enum(["OPEN", "DONE"]),
+  })
+  .partial()
+  .extend({
+    title: z.string().trim().min(1).max(160).optional(),
+    description: z.string().trim().max(1000).nullable().optional(),
+    dueOn: dateOnly.optional(),
+    assignedTo: uuid.nullable().optional(),
+  });
+export type TaskUpdate = z.infer<typeof taskUpdate>;

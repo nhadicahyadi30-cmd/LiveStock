@@ -33,6 +33,8 @@ pnpm install
 pnpm db:up                 # PostgreSQL 16 + role migrator dan app_user
 pnpm db:setup              # generate client, db push, RLS/constraints, seed species
 SEED_DEMO=true pnpm db:seed   # opsional: organisasi dan farm demo
+
+> Setelah `git pull` yang menambah tabel baru (mis. pakan, produksi, tugas), jalankan ulang `pnpm db:setup` agar skema dan file SQL terbaru diterapkan.
 pnpm dev                   # http://localhost:3000
 ```
 
