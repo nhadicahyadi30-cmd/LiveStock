@@ -38,7 +38,7 @@ pnpm dev                   # http://localhost:3000
 
 Antarmuka: buka http://localhost:3000, masuk dengan akun demo (`demo@example.test` / `demo12345`, dibuat oleh
 `SEED_DEMO=true pnpm db:seed`). Isi `SESSION_SECRET` di `.env.local` (minimal 32 karakter, `openssl rand -base64 48`).
-Halaman publik: `/` (profil platform) dan `/login`. Aplikasi di `/app`: Dashboard, Catat (bobot dan kematian, dengan antrean offline), Ternak (tabel batch dan individual, detail batch), dan Peta modul. Tersedia mode gelap dan tampilan HP.
+Halaman publik: `/` (beranda), `/produk`, `/layanan`, `/tentang`, dan `/login`. Aplikasi di `/app`: Dashboard, Catat (bobot dan kematian, dengan antrean offline), Ternak (tabel batch dan individual, detail batch), dan Peta modul. Tersedia mode gelap dan tampilan HP.
 
 Mencoba API dengan sesi pengembangan (hanya aktif bila `ENABLE_DEV_SESSION=true` dan bukan production):
 

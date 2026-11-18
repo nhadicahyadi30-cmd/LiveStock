@@ -14,13 +14,13 @@ export function LogoMark({ size = 36 }: { size?: number }) {
 
 export function Logo({ tagline = false, light = false }: { tagline?: boolean; light?: boolean }) {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10, color: light ? "#fff" : "inherit" }}>
       <LogoMark />
       <div style={{ lineHeight: 1.15 }}>
         <div style={{ fontWeight: 700, fontSize: "1.25rem", letterSpacing: "-0.3px" }}>
           Nusa <span style={{ color: light ? "#bfe6cb" : "var(--brand)" }}>Ternak</span>
         </div>
-        {tagline && <div className="muted" style={{ fontSize: ".78rem" }}>{TAGLINE}</div>}
+        {tagline && <div className={light ? "" : "muted"} style={{ fontSize: ".78rem", opacity: light ? 0.75 : 1 }}>{TAGLINE}</div>}
       </div>
     </div>
   );
