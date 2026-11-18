@@ -38,7 +38,7 @@ pnpm dev                   # http://localhost:3000
 
 Antarmuka: buka http://localhost:3000, masuk dengan akun demo (`demo@example.test` / `demo12345`, dibuat oleh
 `SEED_DEMO=true pnpm db:seed`). Isi `SESSION_SECRET` di `.env.local` (minimal 32 karakter, `openssl rand -base64 48`).
-Halaman: Beranda, Catat (bobot dan kematian, dengan antrean offline), Ternak (batch dan farm).
+Halaman publik: `/` (profil platform) dan `/login`. Aplikasi di `/app`: Dashboard, Catat (bobot dan kematian, dengan antrean offline), Ternak (tabel batch dan individual, detail batch), dan Peta modul. Tersedia mode gelap dan tampilan HP.
 
 Mencoba API dengan sesi pengembangan (hanya aktif bila `ENABLE_DEV_SESSION=true` dan bukan production):
 
@@ -118,7 +118,7 @@ Butuh PostgreSQL 15 atau lebih baru (`security_invoker` pada view).
   aktifkan RLS dan buat fungsi `SECURITY DEFINER` untuk pencarian email (lihat TODO di `001_rls.sql`).
   Bila nanti pindah ke Auth.js atau penyedia terkelola, cukup ganti `SessionProvider`.
 - **Offline.** Antrean memakai localStorage (`lib/offline-queue.ts`) dan hanya terkirim saat aplikasi terbuka.
-  Service worker, IndexedDB, dan ikon PWA belum ada. Tailwind dan shadcn/ui belum dipakai; gaya masih CSS biasa.
+  Service worker, IndexedDB, dan ikon PWA belum ada. Gaya memakai design system CSS sendiri (`apps/web/src/app/globals.css`) dan ikon SVG sendiri, tanpa Tailwind/shadcn.
 - **`ENABLE_DEV_SESSION` wajib mati** di staging dan production. Guard menolaknya bila `NODE_ENV=production`,
   tetapi jangan bergantung pada itu saja.
 - **Model Prisma yang belum ada:** pakan, produksi, kesehatan, tugas, perpindahan, lampiran, laporan, notifikasi,
