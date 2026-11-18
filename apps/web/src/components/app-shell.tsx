@@ -19,23 +19,31 @@ export const useMe = () => useContext(MeCtx);
 const ROLE_LABEL: Record<string, string> = { OWNER: "Pemilik", MANAGER: "Manajer", WORKER: "Petugas kandang", VIEWER: "Pengamat" };
 export const roleLabel = (r: string) => ROLE_LABEL[r] ?? r;
 
-const NAV: { group: string; items: { href: string; label: string; icon: IconName }[] }[] = [
-  { group: "Utama", items: [
+type NavItem = { href: string; label: string; icon: IconName };
+const NAV: { group: string; items: NavItem[] }[] = [
+  { group: "Smart Farm", items: [
     { href: "/app", label: "Dashboard", icon: "home" },
     { href: "/app/catat", label: "Catat", icon: "edit" },
     { href: "/app/ternak", label: "Ternak", icon: "layers" },
     { href: "/app/pakan", label: "Pakan", icon: "farm" },
     { href: "/app/produksi", label: "Produksi", icon: "chart" },
-    { href: "/app/kesehatan", label: "Kesehatan", icon: "heart" },
     { href: "/app/tugas", label: "Tugas", icon: "check" },
-    { href: "/app/keuangan", label: "Keuangan", icon: "coin" },
+  ] },
+  { group: "Kesehatan", items: [{ href: "/app/kesehatan", label: "Kesehatan ternak", icon: "heart" }] },
+  { group: "Marketplace", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }] },
+  { group: "Keuangan", items: [{ href: "/app/keuangan", label: "Keuangan", icon: "coin" }] },
+  { group: "Smart Ternak", items: [
+    { href: "/app/iot", label: "IoT (sensor kandang)", icon: "cpu" },
+    { href: "/app/ai", label: "AI (prediksi)", icon: "spark" },
+  ] },
+  { group: "Platform", items: [
     { href: "/app/laporan", label: "Laporan", icon: "download" },
     { href: "/app/anggota", label: "Anggota", icon: "users" },
+    { href: "/app/modul", label: "Semua modul", icon: "grid" },
   ] },
-  { group: "Ekosistem", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }, { href: "/app/iot", label: "Smart Ternak IoT", icon: "cpu" }, { href: "/app/ai", label: "Smart Ternak AI", icon: "spark" }] },
-  { group: "Pengembangan", items: [{ href: "/app/modul", label: "Semua modul", icon: "grid" }] },
 ];
-const BOTTOM = [NAV[0]!.items[0]!, NAV[0]!.items[1]!, NAV[0]!.items[6]!, NAV[0]!.items[2]!, NAV[2]!.items[0]!];
+const find = (href: string): NavItem => NAV.flatMap((g) => g.items).find((i) => i.href === href)!;
+const BOTTOM = ["/app", "/app/catat", "/app/tugas", "/app/ternak", "/app/modul"].map(find);
 
 interface Notif { id: string; title: string; body: string | null; href: string | null; readAt: string | null }
 
