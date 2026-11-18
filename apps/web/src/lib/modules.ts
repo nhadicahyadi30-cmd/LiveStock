@@ -269,31 +269,31 @@ export const PILLARS: Pillar[] = [
     "modules": [
       {
         "name": "Manajemen perangkat dan gateway",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
-        "note": "Butuh keputusan perangkat dan protokol."
+        "note": "Lewat HTTP dan Node-RED, lihat docs/IOT.md. MQTT menyusul."
       },
       {
         "name": "Sensor kandang: suhu, kelembapan, amonia",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       },
       {
         "name": "Sensor kolam: pH, oksigen, suhu, salinitas",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       },
       {
         "name": "Alarm dan ambang batas otomatis",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       },
       {
         "name": "Pakan dan minum otomatis",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       },
@@ -305,7 +305,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Grafik sensor waktu nyata",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       }

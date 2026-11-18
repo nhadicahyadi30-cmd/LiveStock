@@ -29,6 +29,8 @@ export const PERMISSIONS = [
   "market.manage",
   "finance.read",
   "finance.manage",
+  "iot.read",
+  "iot.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -38,6 +40,7 @@ const READ_ONLY: readonly Permission[] = [
   "records.read",
   "tasks.read",
   "dashboard.read",
+  "iot.read",
 ];
 
 const MATRIX: Record<Role, readonly Permission[]> = {
@@ -57,6 +60,7 @@ const MATRIX: Record<Role, readonly Permission[]> = {
     "market.manage",
     "finance.read",
     "finance.manage",
+    "iot.manage",
   ],
   WORKER: [...READ_ONLY, "livestock.write", "records.create", "tasks.complete"],
   VIEWER: [...READ_ONLY, "reports.export"],

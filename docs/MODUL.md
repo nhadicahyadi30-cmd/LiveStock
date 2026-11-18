@@ -77,13 +77,13 @@ Biaya, pendapatan, dan kelayakan usaha.
 
 Sensor dan otomasi kandang dan kolam.
 
-- [ ] Manajemen perangkat dan gateway (Tahap 5): Butuh keputusan perangkat dan protokol.
-- [ ] Sensor kandang: suhu, kelembapan, amonia (Tahap 5)
-- [ ] Sensor kolam: pH, oksigen, suhu, salinitas (Tahap 5)
-- [ ] Alarm dan ambang batas otomatis (Tahap 5)
-- [ ] Pakan dan minum otomatis (Tahap 5)
+- [~] Manajemen perangkat dan gateway (Tahap 5): Lewat HTTP dan Node-RED, lihat docs/IOT.md. MQTT menyusul.
+- [~] Sensor kandang: suhu, kelembapan, amonia (Tahap 5)
+- [~] Sensor kolam: pH, oksigen, suhu, salinitas (Tahap 5)
+- [~] Alarm dan ambang batas otomatis (Tahap 5)
+- [~] Pakan dan minum otomatis (Tahap 5)
 - [ ] Kamera dan pemantauan visual (Tahap 5)
-- [ ] Grafik sensor waktu nyata (Tahap 5)
+- [~] Grafik sensor waktu nyata (Tahap 5)
 
 ## Smart Ternak (AI)
 

@@ -87,3 +87,11 @@ describe("keuangan", () => {
     expect(can("VIEWER", "finance.read")).toBe(false);
   });
 });
+
+describe("iot", () => {
+  it("semua role boleh melihat, hanya pemilik dan manajer yang mengelola perangkat", () => {
+    for (const r of ["OWNER", "MANAGER", "WORKER", "VIEWER"] as const) expect(can(r, "iot.read")).toBe(true);
+    expect(can("MANAGER", "iot.manage")).toBe(true);
+    expect(can("WORKER", "iot.manage")).toBe(false);
+  });
+});

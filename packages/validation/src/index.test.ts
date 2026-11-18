@@ -58,7 +58,7 @@ describe("mortalityRecordCreate", () => {
   });
 });
 
-import { batchEventCreate, batchEventDelta, feedRecordCreate, productionRecordCreate, taskCreate, healthRecordCreate } from "./index";
+import { batchEventCreate, batchEventDelta, feedRecordCreate, productionRecordCreate, taskCreate, healthRecordCreate, metricName, alertRuleCreate, commandCreate } from "./index";
 
 describe("tahap 1", () => {
   const id = "0192f0a0-0000-7000-8000-00000000d003";
@@ -93,5 +93,21 @@ describe("tahap 2: kesehatan", () => {
   });
   it("masa henti obat tidak boleh sebelum mulai", () => {
     expect(healthRecordCreate.safeParse({ ...base, kind: "TREATMENT", eventOn: "2024-05-10", withdrawalUntil: "2024-05-01" }).success).toBe(false);
+  });
+});
+
+describe("tahap 5: iot", () => {
+  it("nama metrik harus huruf kecil dengan garis bawah", () => {
+    expect(metricName.safeParse("dissolved_oxygen").success).toBe(true);
+    expect(metricName.safeParse("Temperature").success).toBe(false);
+    expect(metricName.safeParse("1temp").success).toBe(false);
+  });
+  it("aturan alarm menolak nilai bukan angka", () => {
+    expect(alertRuleCreate.safeParse({ deviceId: id, name: "Panas", metric: "temperature", op: "GT", threshold: 32 }).success).toBe(true);
+    expect(alertRuleCreate.safeParse({ deviceId: id, name: "Panas", metric: "temperature", op: "GT", threshold: Number.NaN }).success).toBe(false);
+  });
+  it("perintah perangkat memakai nama aman", () => {
+    expect(commandCreate.safeParse({ command: "feeder_on", payload: { value: 10 } }).success).toBe(true);
+    expect(commandCreate.safeParse({ command: "rm -rf" }).success).toBe(false);
   });
 });

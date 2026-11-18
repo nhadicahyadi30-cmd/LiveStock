@@ -296,3 +296,57 @@ export const invoiceCreate = z
   .refine((v) => v.dueOn >= v.issueOn, { message: "Jatuh tempo tidak boleh sebelum tanggal terbit", path: ["dueOn"] });
 
 export const invoicePay = z.object({ paidOn: pastOrToday.optional(), category: z.enum(INCOME_CATEGORIES).default("PENJUALAN_TERNAK") });
+
+// ---------------------------------------------------------------- Tahap 5: Smart Ternak IoT
+
+/** Nama metrik: huruf kecil, angka, garis bawah (cocok dengan key JSON di Node-RED/ESP32). */
+export const metricName = z.string().regex(/^[a-z][a-z0-9_]{0,39}$/, "Nama metrik: huruf kecil, angka, garis bawah (maks. 40)");
+/** Metrik yang dikenal untuk label dan satuan di tampilan. Metrik lain tetap diterima. */
+export const METRIC_INFO: Record<string, { label: string; unit: string }> = {
+  temperature: { label: "Suhu kandang", unit: "°C" },
+  humidity: { label: "Kelembapan", unit: "%" },
+  ammonia: { label: "Amonia (NH3)", unit: "ppm" },
+  co2: { label: "CO2", unit: "ppm" },
+  water_temp: { label: "Suhu air", unit: "°C" },
+  ph: { label: "pH air", unit: "" },
+  dissolved_oxygen: { label: "Oksigen terlarut", unit: "mg/L" },
+  salinity: { label: "Salinitas", unit: "ppt" },
+  feed_weight: { label: "Berat pakan", unit: "kg" },
+  water_level: { label: "Level air", unit: "%" },
+  light: { label: "Cahaya", unit: "lux" },
+};
+
+export const deviceCreate = z.object({
+  name: z.string().trim().min(2).max(80),
+  farmId: uuid,
+  locationName: z.string().trim().max(80).optional(),
+});
+export const deviceUpdate = z.object({ name: z.string().trim().min(2).max(80), locationName: z.string().trim().max(80), status: z.enum(["ACTIVE", "DISABLED"]) }).partial().refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
+
+const tsInput = z.union([z.string().datetime({ offset: true }), z.number().positive()]).optional();
+const num = z.number().finite().min(-1e8).max(1e8);
+/**
+ * Isi kiriman perangkat. Tiga bentuk diterima (semua boleh membawa "ts": ISO 8601 atau epoch detik/milidetik):
+ *  1. { "temperature": 28.4, "humidity": 70 }                       (datar, paling mudah dari Node-RED)
+ *  2. { "metric": "temperature", "value": 28.4 }
+ *  3. { "readings": [ { "metric": "temperature", "value": 28.4, "ts": ... }, ... ] }
+ */
+export const IOT_MAX_READINGS = 50;
+export const readingsPayload = z.object({
+  readings: z.array(z.object({ metric: metricName, value: num, ts: tsInput })).min(1).max(IOT_MAX_READINGS),
+});
+
+export const alertRuleCreate = z.object({
+  deviceId: uuid,
+  name: z.string().trim().min(2).max(100),
+  metric: metricName,
+  op: z.enum(["GT", "LT"]),
+  threshold: num,
+});
+export const alertRuleUpdate = z.object({ enabled: z.boolean().optional(), threshold: num.optional() }).refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
+
+export const commandCreate = z.object({
+  command: z.string().regex(/^[a-z][a-z0-9_]{0,39}$/, "Nama perintah: huruf kecil, angka, garis bawah"),
+  payload: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).optional(),
+});
+export const commandAck = z.object({ result: z.string().max(300).optional() });

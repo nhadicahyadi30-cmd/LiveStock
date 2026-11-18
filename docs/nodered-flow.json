@@ -1,0 +1,39 @@
+[
+  {
+    "id": "nt_tab", "type": "tab", "label": "Nusa Ternak IoT", "disabled": false,
+    "info": "Ganti BASE_URL dan DEVICE_TOKEN di node 'Konfigurasi'. Alur 1 mengirim data sensor, alur 2 mengambil perintah dari server."
+  },
+  {
+    "id": "nt_cfg", "type": "change", "z": "nt_tab", "name": "Konfigurasi", "x": 190, "y": 80, "wires": [["nt_fn"]],
+    "rules": [
+      { "t": "set", "p": "baseUrl", "pt": "flow", "to": "https://GANTI-DENGAN-ALAMAT-APLIKASI", "tot": "str" },
+      { "t": "set", "p": "token", "pt": "flow", "to": "nt_dev_GANTI_DENGAN_TOKEN", "tot": "str" }
+    ], "action": "", "property": "", "from": "", "to": "", "reg": false
+  },
+  { "id": "nt_start", "type": "inject", "z": "nt_tab", "name": "Sekali saat start", "props": [], "repeat": "", "once": true, "onceDelay": 1, "x": 130, "y": 40, "wires": [["nt_cfg"]] },
+  {
+    "id": "nt_tick", "type": "inject", "z": "nt_tab", "name": "Tiap 30 detik", "props": [{ "p": "payload" }], "repeat": "30", "once": false, "payload": "", "payloadType": "date", "x": 140, "y": 140, "wires": [["nt_fn"]]
+  },
+  {
+    "id": "nt_fn", "type": "function", "z": "nt_tab", "name": "Susun data sensor (ganti dengan pembacaan sensor aslinya)",
+    "func": "// Ganti nilai di bawah dengan hasil baca sensor (GPIO, Modbus, MQTT lokal, dsb.)\nconst baseUrl = flow.get('baseUrl');\nconst token = flow.get('token');\nif (!baseUrl || !token) { node.warn('Atur baseUrl dan token dulu'); return null; }\nmsg.url = baseUrl + '/api/iot/v1/readings';\nmsg.headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };\nmsg.payload = { temperature: 28.4, humidity: 70, ammonia: 11 };\nreturn msg;",
+    "outputs": 1, "x": 480, "y": 120, "wires": [["nt_post"]]
+  },
+  { "id": "nt_post", "type": "http request", "z": "nt_tab", "name": "Kirim ke Nusa Ternak", "method": "POST", "ret": "obj", "paytoqs": "ignore", "url": "", "tls": "", "persist": false, "proxy": "", "authType": "", "x": 750, "y": 120, "wires": [["nt_dbg"]] },
+  { "id": "nt_dbg", "type": "debug", "z": "nt_tab", "name": "Hasil kirim (201 = berhasil)", "active": true, "tosidebar": true, "complete": "true", "x": 990, "y": 120, "wires": [] },
+
+  { "id": "nt_poll", "type": "inject", "z": "nt_tab", "name": "Cek perintah tiap 10 detik", "props": [], "repeat": "10", "once": false, "x": 160, "y": 260, "wires": [["nt_pfn"]] },
+  {
+    "id": "nt_pfn", "type": "function", "z": "nt_tab", "name": "Siapkan GET perintah",
+    "func": "const baseUrl = flow.get('baseUrl');\nconst token = flow.get('token');\nif (!baseUrl || !token) return null;\nmsg.method = 'GET';\nmsg.url = baseUrl + '/api/iot/v1/commands';\nmsg.headers = { 'Authorization': 'Bearer ' + token };\nreturn msg;",
+    "outputs": 1, "x": 400, "y": 260, "wires": [["nt_get"]]
+  },
+  { "id": "nt_get", "type": "http request", "z": "nt_tab", "name": "Ambil perintah", "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "x": 620, "y": 260, "wires": [["nt_split"]] },
+  { "id": "nt_split", "type": "split", "z": "nt_tab", "name": "Per perintah", "splt": "\\n", "spltType": "str", "arraySplt": 1, "arraySpltType": "len", "stream": false, "addname": "", "property": "payload.data", "x": 810, "y": 260, "wires": [["nt_run"]] },
+  {
+    "id": "nt_run", "type": "function", "z": "nt_tab", "name": "Jalankan perintah lalu konfirmasi",
+    "func": "// msg.payload = { id, command, payload }. Ganti bagian switch dengan kendali relay/GPIO Anda.\nconst c = msg.payload;\nlet result = 'ok';\nswitch (c.command) {\n  case 'feeder_on':  /* nyalakan pakan otomatis */ break;\n  case 'feeder_off': break;\n  case 'fan_on':     break;\n  case 'fan_off':    break;\n  default: result = 'perintah tidak dikenal';\n}\nconst baseUrl = flow.get('baseUrl');\nconst token = flow.get('token');\nmsg.method = 'POST';\nmsg.url = baseUrl + '/api/iot/v1/commands/' + c.id + '/ack';\nmsg.headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };\nmsg.payload = { result };\nreturn msg;",
+    "outputs": 1, "x": 1050, "y": 260, "wires": [["nt_ack"]]
+  },
+  { "id": "nt_ack", "type": "http request", "z": "nt_tab", "name": "Konfirmasi ke server", "method": "use", "ret": "obj", "paytoqs": "ignore", "url": "", "x": 1290, "y": 260, "wires": [[]] }
+]
