@@ -618,3 +618,73 @@ model MarketReview {
   @@index([sellerOrgId])
   @@map("market_reviews")
 }
+
+// ---------------------------------------------------------------- Tahap 4: Keuangan
+// Biaya pakan dan kesehatan TIDAK diinput ulang di sini: dihitung otomatis dari feed_records dan health_records.
+
+enum FinanceKind {
+  INCOME
+  EXPENSE
+}
+
+enum InvoiceStatus {
+  OPEN
+  PAID
+  VOID
+}
+
+model FinanceEntry {
+  id             String      @id @default(uuid(7)) @db.Uuid
+  organizationId String      @map("organization_id") @db.Uuid
+  kind           FinanceKind
+  category       String
+  amount         Decimal     @db.Decimal(16, 2)
+  occurredOn     DateTime    @map("occurred_on") @db.Date
+  batchId        String?     @map("batch_id") @db.Uuid
+  invoiceId      String?     @map("invoice_id") @db.Uuid
+  description    String?
+  recordedBy     String      @map("recorded_by") @db.Uuid
+  clientId       String?     @map("client_id") @db.Uuid
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime?   @map("voided_at") @db.Timestamptz(6)
+  voidedBy       String?     @map("voided_by") @db.Uuid
+  voidReason     String?     @map("void_reason")
+
+  @@unique([organizationId, clientId])
+  @@index([organizationId, occurredOn(sort: Desc)])
+  @@index([organizationId, batchId])
+  @@map("finance_entries")
+}
+
+model Budget {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  month          String
+  category       String
+  amount         Decimal  @db.Decimal(16, 2)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, month, category])
+  @@map("budgets")
+}
+
+model Invoice {
+  id              String        @id @default(uuid(7)) @db.Uuid
+  organizationId  String        @map("organization_id") @db.Uuid
+  number          String
+  customerName    String        @map("customer_name")
+  customerContact String?       @map("customer_contact")
+  batchId         String?       @map("batch_id") @db.Uuid
+  issueOn         DateTime      @map("issue_on") @db.Date
+  dueOn           DateTime      @map("due_on") @db.Date
+  description     String?
+  amount          Decimal       @db.Decimal(16, 2)
+  status          InvoiceStatus @default(OPEN)
+  paidOn          DateTime?     @map("paid_on") @db.Date
+  createdBy       String        @map("created_by") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, number])
+  @@index([organizationId, status, dueOn])
+  @@map("invoices")
+}

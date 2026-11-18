@@ -78,3 +78,12 @@ describe("marketplace", () => {
     expect(can("VIEWER", "market.manage")).toBe(false);
   });
 });
+
+describe("keuangan", () => {
+  it("hanya pemilik dan manajer yang melihat dan mengelola keuangan", () => {
+    expect(can("OWNER", "finance.manage")).toBe(true);
+    expect(can("MANAGER", "finance.read")).toBe(true);
+    expect(can("WORKER", "finance.read")).toBe(false);
+    expect(can("VIEWER", "finance.read")).toBe(false);
+  });
+});

@@ -28,6 +28,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: IconName
     { href: "/app/produksi", label: "Produksi", icon: "chart" },
     { href: "/app/kesehatan", label: "Kesehatan", icon: "heart" },
     { href: "/app/tugas", label: "Tugas", icon: "check" },
+    { href: "/app/keuangan", label: "Keuangan", icon: "coin" },
     { href: "/app/laporan", label: "Laporan", icon: "download" },
     { href: "/app/anggota", label: "Anggota", icon: "users" },
   ] },
@@ -137,7 +138,7 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
       <aside className={`sidebar ${open ? "open" : ""}`} aria-label="Navigasi utama">
         <div className="sb-logo"><Link href="/app" style={{ textDecoration: "none", color: "inherit" }}><Logo /></Link></div>
         <nav className="nav">
-          {NAV.map((g) => (
+          {NAV.map((g) => ({ ...g, items: g.items.filter((i) => !(["/app/keuangan", "/app/pasar"].includes(i.href) && org?.role !== "OWNER" && org?.role !== "MANAGER")) })).filter((g) => g.items.length > 0).map((g) => (
             <div className="nav-group" key={g.group}>
               <div className="nav-title">{g.group}</div>
               {g.items.map((i) => (

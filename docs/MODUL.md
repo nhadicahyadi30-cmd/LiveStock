@@ -67,10 +67,10 @@ Jual beli ternak, pakan, dan sarana multi-vendor.
 
 Biaya, pendapatan, dan kelayakan usaha.
 
-- [ ] Pencatatan pemasukan dan pengeluaran (Tahap 4)
-- [ ] HPP dan laba-rugi per batch (Tahap 4)
-- [ ] Anggaran dan arus kas (Tahap 4)
-- [ ] Invoice dan piutang (Tahap 4)
+- [~] Pencatatan pemasukan dan pengeluaran (Tahap 4)
+- [~] HPP dan laba-rugi per batch (Tahap 4)
+- [~] Anggaran dan arus kas (Tahap 4)
+- [~] Invoice dan piutang (Tahap 4)
 - [ ] Akses pembiayaan dan mitra (Tahap 4): Butuh mitra keuangan.
 
 ## Smart Ternak (IoT)

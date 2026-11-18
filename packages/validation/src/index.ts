@@ -254,3 +254,45 @@ export const marketReviewCreate = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().max(500).optional(),
 });
+
+// ---------------------------------------------------------------- Tahap 4: Keuangan
+
+/** Kategori yang diinput manual. Pakan dan kesehatan dihitung otomatis dari modulnya (jangan diinput ganda). */
+export const EXPENSE_CATEGORIES = ["BIBIT", "TENAGA_KERJA", "LISTRIK_AIR", "TRANSPORT", "PERALATAN", "SEWA", "LAINNYA"] as const;
+export const INCOME_CATEGORIES = ["PENJUALAN_TERNAK", "PENJUALAN_HASIL", "LAINNYA"] as const;
+/** Kategori anggaran = pengeluaran manual + dua kategori otomatis. */
+export const BUDGET_CATEGORIES = ["PAKAN", "KESEHATAN", ...EXPENSE_CATEGORIES] as const;
+const monthStr = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/, "Format bulan harus YYYY-MM");
+const positiveMoney = z.number().positive().max(1_000_000_000_000);
+
+export const financeEntryCreate = z
+  .object({
+    kind: z.enum(["INCOME", "EXPENSE"]),
+    category: z.string(),
+    amount: positiveMoney,
+    occurredOn: pastOrToday,
+    batchId: uuid.optional(),
+    description: z.string().trim().max(300).optional(),
+    clientId,
+  })
+  .refine((v) => (v.kind === "INCOME" ? (INCOME_CATEGORIES as readonly string[]) : (EXPENSE_CATEGORIES as readonly string[])).includes(v.category), { message: "Kategori tidak sesuai jenis transaksi", path: ["category"] });
+
+export const budgetUpsert = z.object({
+  month: monthStr,
+  items: z.array(z.object({ category: z.enum(BUDGET_CATEGORIES), amount: z.number().nonnegative().max(1_000_000_000_000) })).min(1).max(BUDGET_CATEGORIES.length),
+});
+export const financeMonthQuery = monthStr;
+
+export const invoiceCreate = z
+  .object({
+    customerName: z.string().trim().min(2).max(120),
+    customerContact: z.string().trim().max(120).optional(),
+    batchId: uuid.optional(),
+    issueOn: anyDate,
+    dueOn: anyDate,
+    description: z.string().trim().max(500).optional(),
+    amount: positiveMoney,
+  })
+  .refine((v) => v.dueOn >= v.issueOn, { message: "Jatuh tempo tidak boleh sebelum tanggal terbit", path: ["dueOn"] });
+
+export const invoicePay = z.object({ paidOn: pastOrToday.optional(), category: z.enum(INCOME_CATEGORIES).default("PENJUALAN_TERNAK") });

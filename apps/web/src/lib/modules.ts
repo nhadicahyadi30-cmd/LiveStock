@@ -232,25 +232,25 @@ export const PILLARS: Pillar[] = [
     "modules": [
       {
         "name": "Pencatatan pemasukan dan pengeluaran",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
         "note": ""
       },
       {
         "name": "HPP dan laba-rugi per batch",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
         "note": ""
       },
       {
         "name": "Anggaran dan arus kas",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
         "note": ""
       },
       {
         "name": "Invoice dan piutang",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
         "note": ""
       },
