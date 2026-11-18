@@ -4,6 +4,13 @@ packages:
 
 # pnpm 10+ tidak menjalankan skrip build paket secara bawaan. Prisma perlu mengunduh mesin,
 # esbuild dan sharp perlu memasang biner bawaannya.
+# allowBuilds dipakai pnpm 11; onlyBuiltDependencies dipakai pnpm 10.
+allowBuilds:
+  "@prisma/client": true
+  "@prisma/engines": true
+  prisma: true
+  esbuild: true
+  sharp: true
 onlyBuiltDependencies:
   - "@prisma/client"
   - "@prisma/engines"
