@@ -133,7 +133,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Dashboard dan laporan (PDF/Excel)",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": "Wireframe dashboard ada di dokumen spesifikasi."
       },

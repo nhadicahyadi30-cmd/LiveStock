@@ -27,6 +27,7 @@ const NAV: { group: string; items: { href: string; label: string; icon: IconName
     { href: "/app/pakan", label: "Pakan", icon: "farm" },
     { href: "/app/produksi", label: "Produksi", icon: "chart" },
     { href: "/app/tugas", label: "Tugas", icon: "check" },
+    { href: "/app/laporan", label: "Laporan", icon: "download" },
   ] },
   { group: "Pengembangan", items: [{ href: "/app/modul", label: "Semua modul", icon: "grid" }] },
 ];

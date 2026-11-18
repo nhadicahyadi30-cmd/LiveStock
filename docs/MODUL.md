@@ -39,7 +39,7 @@ Pencatatan dan pengelolaan peternakan harian.
 - [~] Perpindahan dan penjualan ternak (Tahap 1): Mutasi antar kandang, jual, afkir.
 - [~] Tugas harian dan pengingat (Tahap 1)
 - [~] Notifikasi (Tahap 1)
-- [ ] Dashboard dan laporan (PDF/Excel) (Tahap 1): Wireframe dashboard ada di dokumen spesifikasi.
+- [~] Dashboard dan laporan (PDF/Excel) (Tahap 1): Wireframe dashboard ada di dokumen spesifikasi.
 - [~] PWA dan mode offline penuh (Tahap 1): Antrean offline dasar sudah ada.
 
 ## Kesehatan Ternak

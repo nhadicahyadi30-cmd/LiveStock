@@ -11,6 +11,8 @@ interface Summary {
   farms: number; activeBatches: number; population: number; mortality30d: number;
   mortalitySeries: { date: string; count: number }[];
   byBatch: { id: string; code: string; population: number }[];
+  feedKg30d?: number; feedCost30d?: number; production30d?: Record<string, number>;
+  dueTasks?: { id: string; title: string; dueOn: string }[];
   recent: { id: string; type: "weight" | "mortality"; at: string; label: string; detail: string }[];
 }
 
@@ -56,6 +58,14 @@ export default function DashboardPage() {
         )) : [0, 1, 2, 3].map((i) => <Skeleton key={i} h={118} />)}
       </div>
 
+      {s && (
+        <div className="grid g3 mt-2">
+          <div className="card kpi"><div className="kpi-top">Pakan 30 hari<span className="kpi-ic amber"><Icon name="farm" size={18} /></span></div><div className="kpi-v">{fmt(Math.round(s.feedKg30d ?? 0))}<span className="muted" style={{ fontSize: 16 }}> kg</span></div><div className="kpi-s">Rp {fmt(Math.round(s.feedCost30d ?? 0))} · <Link href="/app/pakan">detail</Link></div></div>
+          <div className="card kpi"><div className="kpi-top">Produksi 30 hari<span className="kpi-ic blue"><Icon name="chart" size={18} /></span></div><div className="kpi-v">{fmt(Math.round(s.production30d?.EGG ?? 0))}<span className="muted" style={{ fontSize: 16 }}> butir</span></div><div className="kpi-s">{fmt(Math.round(s.production30d?.MILK ?? 0))} liter susu · {fmt(Math.round(s.production30d?.HARVEST ?? 0))} kg panen · <Link href="/app/produksi">detail</Link></div></div>
+          <div className="card kpi"><div className="kpi-top">Tugas jatuh tempo<span className="kpi-ic red"><Icon name="check" size={18} /></span></div><div className="kpi-v">{fmt(s.dueTasks?.length ?? 0)}</div><div className="kpi-s">{s.dueTasks?.[0] ? `${s.dueTasks[0].title} · ` : "Tidak ada yang mendesak · "}<Link href="/app/tugas">lihat</Link></div></div>
+        </div>
+      )}
+
       <div className="grid g-main mt-2">
         <div className="card">
           <div className="card-h"><h3>Kematian 30 hari terakhir</h3><span className="badge">{s ? `${fmt(s.mortality30d)} ekor` : "…"}</span></div>
@@ -90,6 +100,7 @@ export default function DashboardPage() {
           <div className="card-b col">
             <Link href="/app/catat?jenis=weight" className="btn btn-secondary"><Icon name="scale" size={18} /> Catat bobot</Link>
             <Link href="/app/catat?jenis=mortality" className="btn btn-secondary"><Icon name="skull" size={18} /> Catat kematian</Link>
+            <Link href="/app/catat?jenis=feed" className="btn btn-secondary"><Icon name="farm" size={18} /> Catat pakan</Link>
             <Link href="/app/ternak" className="btn btn-secondary"><Icon name="plus" size={18} /> Tambah batch</Link>
             <Link href="/app/modul" className="btn btn-ghost"><Icon name="grid" size={18} /> Lihat peta modul</Link>
           </div>
