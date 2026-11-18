@@ -15,6 +15,7 @@ const NAV = [
   { href: "/", label: "Beranda" },
   { href: "/catat", label: "Catat" },
   { href: "/ternak", label: "Ternak" },
+  { href: "/modul", label: "Modul" },
 ];
 
 export function AuthGate({ children }: { children: ReactNode }) {

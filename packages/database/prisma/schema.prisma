@@ -1,4 +1,4 @@
-// Skema inti MVP Smart Livestock Ecosystem.
+// Skema inti MVP Nusa Ternak.
 // Mengikuti dokumen "Desain Database MVP": UUID, timestamptz UTC, organization_id pada tabel bertenant.
 // Yang TIDAK bisa dinyatakan di Prisma (RLS, CHECK, view, trigger, grant) ada di prisma/sql/*.sql.
 //

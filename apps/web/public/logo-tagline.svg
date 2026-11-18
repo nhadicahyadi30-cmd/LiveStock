@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 84" role="img" aria-label="Nusa Ternak - Ekosistem Ternak Cerdas untuk Nusantara">
+  <g><defs><clipPath id="nt-c"><rect width="64" height="64" rx="14"/></clipPath></defs>
+  <rect width="64" height="64" rx="14" fill="#2f6b3a"/>
+  <g clip-path="url(#nt-c)"><circle cx="45" cy="62" r="21" fill="#8fc79a"/><circle cx="21" cy="64" r="25" fill="#ffffff"/></g>
+  <path d="M19 22l13-8 13 8" stroke="#e0b04f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <g fill="#e0b04f"><circle cx="19" cy="22" r="3.3"/><circle cx="32" cy="14" r="3.3"/><circle cx="45" cy="22" r="3.3"/></g></g>
+  <text x="78" y="36" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="32" font-weight="700" letter-spacing="-0.5"><tspan fill="#1d2a1f">Nusa</tspan><tspan fill="#2f6b3a" dx="8">Ternak</tspan></text>
+  <text x="79" y="58" font-family="'Segoe UI',system-ui,-apple-system,sans-serif" font-size="13.5" fill="#667267" letter-spacing="0.3">Ekosistem Ternak Cerdas untuk Nusantara</text>
+</svg>

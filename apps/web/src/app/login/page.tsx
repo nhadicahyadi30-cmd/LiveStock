@@ -1,6 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { Logo } from "@/components/logo";
 import { api, ApiFailure } from "@/lib/api";
 
 export default function LoginPage() {
@@ -25,6 +26,7 @@ export default function LoginPage() {
 
   return (
     <main className="page">
+      <div style={{ margin: "24px 0 16px" }}><Logo tagline /></div>
       <h1>Masuk</h1>
       <form className="card" onSubmit={onSubmit}>
         <label htmlFor="email">Email</label>

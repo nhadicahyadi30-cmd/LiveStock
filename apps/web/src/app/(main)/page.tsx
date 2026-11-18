@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Logo } from "@/components/logo";
 import { api } from "@/lib/api";
 
 interface Batch { id: string; code: string; status: string; initialCount: number; currentCount: number }
@@ -20,6 +21,7 @@ export default function HomePage() {
 
   return (
     <main className="page">
+      <div style={{ margin: "4px 0 14px" }}><Logo /></div>
       <h1>Beranda</h1>
       {error && <div className="msg err">{error}</div>}
       <div className="card row">

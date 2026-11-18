@@ -1,4 +1,6 @@
-# Smart Livestock Ecosystem
+# Nusa Ternak
+
+*Ekosistem Ternak Cerdas untuk Nusantara.* Logo: `apps/web/public/logo*.svg`. Daftar modul dan tahap pengerjaan: [docs/MODUL.md](docs/MODUL.md).
 
 Kerangka proyek untuk MVP (pilar Smart Farm): monorepo pnpm, Next.js, PostgreSQL + Prisma, isolasi tenant
 dengan RLS, matriks izin, dan CI. Mengikuti dokumen *Spesifikasi Sistem & UI/UX MVP* dan *Desain Database MVP*.
