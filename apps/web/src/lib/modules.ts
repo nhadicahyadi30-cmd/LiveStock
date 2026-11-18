@@ -48,13 +48,13 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Registrasi, reset kata sandi, verifikasi email",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": ""
       },
       {
         "name": "Anggota dan undangan",
-        "status": "planned",
+        "status": "progress",
         "phase": 1,
         "note": "Undang tim, atur role dan akses per farm."
       },

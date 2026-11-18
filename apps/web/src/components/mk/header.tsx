@@ -28,14 +28,14 @@ export function SiteHeader() {
         </nav>
         <div className="right row">
           <Link href="/login" className="btn btn-ghost sx-login">Masuk</Link>
-          <Link href="/login" className="btn btn-primary sx-cta">Coba sekarang</Link>
+          <Link href="/register" className="btn btn-primary sx-cta">Coba sekarang</Link>
           <button className="icon-btn sx-burger" onClick={() => setOpen((o) => !o)} aria-label="Menu" aria-expanded={open}><Icon name={open ? "x" : "menu"} /></button>
         </div>
       </div>
       {open && (
         <div className="sx-drawer">
           {LINKS.map((l) => <Link key={l.href} href={l.href}>{l.label}</Link>)}
-          <Link href="/login" className="btn btn-primary btn-block mt-1">Masuk / Coba sekarang</Link>
+          <Link href="/register" className="btn btn-primary btn-block mt-1">Coba sekarang gratis</Link>
         </div>
       )}
     </header>

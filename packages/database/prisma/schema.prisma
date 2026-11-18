@@ -457,3 +457,27 @@ model Notification {
   @@index([organizationId, userId, readAt, createdAt(sort: Desc)])
   @@map("notifications")
 }
+
+enum AuthTokenKind {
+  INVITE
+  RESET
+}
+
+/// Token sekali pakai untuk undangan anggota dan reset kata sandi. Hanya hash-nya yang disimpan.
+/// Sengaja tanpa kolom organization_id: diakses server tanpa konteks tenant (belum ada sesi).
+model AuthToken {
+  id          String        @id @default(uuid(7)) @db.Uuid
+  kind        AuthTokenKind
+  tokenHash   String        @unique @map("token_hash")
+  email       String
+  targetOrgId String?       @map("target_org_id") @db.Uuid
+  role        Role?
+  invitedBy   String?       @map("invited_by") @db.Uuid
+  expiresAt   DateTime      @map("expires_at") @db.Timestamptz(6)
+  usedAt      DateTime?     @map("used_at") @db.Timestamptz(6)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([email, kind])
+  @@index([targetOrgId])
+  @@map("auth_tokens")
+}

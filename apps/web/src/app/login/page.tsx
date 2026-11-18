@@ -49,7 +49,9 @@ export default function LoginPage() {
                 <button type="button" className="btn btn-ghost btn-sm" style={{ position: "absolute", right: 4, top: 5 }} onClick={() => setShow((s) => !s)}>{show ? "Sembunyi" : "Lihat"}</button></div></div>
             <button type="submit" className="btn btn-primary btn-lg btn-block" disabled={busy}>{busy ? <><Spinner /> Memproses…</> : "Masuk"}</button>
           </form>
-          <p className="sm muted mt-3"><Link href="/"><Icon name="arrowLeft" size={14} /> Kembali ke beranda</Link></p>
+          <p className="sm mt-3"><Link href="/lupa-sandi">Lupa kata sandi?</Link></p>
+          <p className="sm muted mt-1">Belum punya akun? <Link href="/register">Daftar gratis</Link></p>
+          <p className="sm muted mt-1"><Link href="/"><Icon name="arrowLeft" size={14} /> Kembali ke beranda</Link></p>
         </div>
       </main>
     </div>

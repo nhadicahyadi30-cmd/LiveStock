@@ -21,8 +21,8 @@ Fondasi yang dipakai semua pilar.
 - [x] Login dan sesi (Selesai): Email + kata sandi, cookie bertanda tangan.
 - [x] Role dan hak akses (Selesai): Owner, Manajer, Petugas, Pengamat.
 - [x] Audit log (Selesai): Jejak aksi penting, tidak bisa diubah.
-- [ ] Registrasi, reset kata sandi, verifikasi email (Tahap 1)
-- [ ] Anggota dan undangan (Tahap 1): Undang tim, atur role dan akses per farm.
+- [~] Registrasi, reset kata sandi, verifikasi email (Tahap 1)
+- [~] Anggota dan undangan (Tahap 1): Undang tim, atur role dan akses per farm.
 - [ ] Paket langganan dan penagihan (Tahap 4)
 - [ ] API terbuka dan webhook (Tahap 6)
 
