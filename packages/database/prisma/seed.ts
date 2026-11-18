@@ -40,16 +40,13 @@ const DEMO = {
 };
 
 async function seedDemo(): Promise<void> {
+  // Kata sandi demo hanya untuk pengembangan lokal. Ganti lewat SEED_DEMO_PASSWORD.
+  // Diatur ulang setiap seed demo dijalankan, supaya akun demo lama tanpa kata sandi ikut diperbaiki.
+  const passwordHash = await hashPassword(process.env.SEED_DEMO_PASSWORD ?? "demo12345");
   await prisma.user.upsert({
     where: { id: DEMO.userId },
-    update: {},
-    // Kata sandi demo hanya untuk pengembangan lokal. Ganti lewat SEED_DEMO_PASSWORD.
-    create: {
-      id: DEMO.userId,
-      email: "demo@example.test",
-      name: "Pengguna Demo",
-      passwordHash: await hashPassword(process.env.SEED_DEMO_PASSWORD ?? "demo12345"),
-    },
+    update: { passwordHash, isActive: true },
+    create: { id: DEMO.userId, email: "demo@example.test", name: "Pengguna Demo", passwordHash },
   });
 
   // migrator juga tunduk pada RLS (FORCE), jadi konteks tenant diset seperti di aplikasi.
