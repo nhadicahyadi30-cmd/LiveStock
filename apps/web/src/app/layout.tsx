@@ -15,8 +15,8 @@ const THEME_SCRIPT = `try{var t=localStorage.getItem("nt.theme");if(!t&&window.m
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="id" suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
+    <html lang="id" translate="no" suppressHydrationWarning>
+      <head><meta name="google" content="notranslate" /><script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} /></head>
       <body>{children}<SwRegister /></body>
     </html>
   );
