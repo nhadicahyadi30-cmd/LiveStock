@@ -89,9 +89,9 @@ Sensor dan otomasi kandang dan kolam.
 
 Prediksi dan rekomendasi dari data peternakan.
 
-- [ ] Prediksi bobot dan waktu panen (Tahap 6): Butuh data riil beberapa siklus.
-- [ ] Deteksi dini penyakit dan anomali (Tahap 6)
-- [ ] Rekomendasi pakan dan FCR (Tahap 6)
+- [~] Prediksi bobot dan waktu panen (Tahap 6): Butuh data riil beberapa siklus.
+- [~] Deteksi dini penyakit dan anomali (Tahap 6)
+- [~] Rekomendasi pakan dan FCR (Tahap 6)
 - [ ] Prediksi harga pasar (Tahap 6)
 - [ ] Asisten tanya-jawab peternakan (Tahap 6)
 

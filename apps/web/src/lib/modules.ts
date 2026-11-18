@@ -318,21 +318,21 @@ export const PILLARS: Pillar[] = [
     "modules": [
       {
         "name": "Prediksi bobot dan waktu panen",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
-        "note": "Butuh data riil beberapa siklus."
+        "note": "Garis tren statistik dari catatan bobot; makin rutin makin akurat."
       },
       {
         "name": "Deteksi dini penyakit dan anomali",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
-        "note": ""
+        "note": "Lonjakan kematian, pakan turun, bobot turun, sensor menyimpang. Berbasis aturan statistik."
       },
       {
         "name": "Rekomendasi pakan dan FCR",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
-        "note": ""
+        "note": "FCR per batch dan perbandingan antarbatch usaha sendiri."
       },
       {
         "name": "Prediksi harga pasar",
