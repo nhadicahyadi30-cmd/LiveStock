@@ -25,6 +25,8 @@ export const PERMISSIONS = [
   "dashboard.read",
   "reports.export",
   "audit.read",
+  "market.read",
+  "market.manage",
 ] as const;
 export type Permission = (typeof PERMISSIONS)[number];
 
@@ -49,6 +51,8 @@ const MATRIX: Record<Role, readonly Permission[]> = {
     "tasks.complete",
     "reports.export",
     "audit.read",
+    "market.read",
+    "market.manage",
   ],
   WORKER: [...READ_ONLY, "livestock.write", "records.create", "tasks.complete"],
   VIEWER: [...READ_ONLY, "reports.export"],

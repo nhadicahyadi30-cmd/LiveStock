@@ -55,12 +55,12 @@ Vaksin, pengobatan, dan pencegahan penyakit.
 
 Jual beli ternak, pakan, dan sarana multi-vendor.
 
-- [ ] Profil vendor dan verifikasi (Tahap 3)
-- [ ] Katalog produk dan stok (Tahap 3)
-- [ ] Keranjang, pesanan, dan status (Tahap 3)
+- [~] Profil vendor dan verifikasi (Tahap 3)
+- [~] Katalog produk dan stok (Tahap 3)
+- [~] Keranjang, pesanan, dan status (Tahap 3)
 - [ ] Pembayaran dan rekening bersama (escrow) (Tahap 3): Butuh keputusan penyedia pembayaran.
 - [ ] Pengiriman dan logistik (Tahap 3)
-- [ ] Ulasan dan reputasi (Tahap 3)
+- [~] Ulasan dan reputasi (Tahap 3)
 - [ ] Harga pasar (Tahap 3)
 
 ## Keuangan

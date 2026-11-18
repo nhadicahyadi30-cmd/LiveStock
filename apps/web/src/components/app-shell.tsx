@@ -31,9 +31,10 @@ const NAV: { group: string; items: { href: string; label: string; icon: IconName
     { href: "/app/laporan", label: "Laporan", icon: "download" },
     { href: "/app/anggota", label: "Anggota", icon: "users" },
   ] },
+  { group: "Ekosistem", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }] },
   { group: "Pengembangan", items: [{ href: "/app/modul", label: "Semua modul", icon: "grid" }] },
 ];
-const BOTTOM = [NAV[0]!.items[0]!, NAV[0]!.items[1]!, NAV[0]!.items[6]!, NAV[0]!.items[2]!, NAV[1]!.items[0]!];
+const BOTTOM = [NAV[0]!.items[0]!, NAV[0]!.items[1]!, NAV[0]!.items[6]!, NAV[0]!.items[2]!, NAV[2]!.items[0]!];
 
 interface Notif { id: string; title: string; body: string | null; href: string | null; readAt: string | null }
 

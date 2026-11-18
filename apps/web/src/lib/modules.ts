@@ -183,19 +183,19 @@ export const PILLARS: Pillar[] = [
     "modules": [
       {
         "name": "Profil vendor dan verifikasi",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       },
       {
         "name": "Katalog produk dan stok",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       },
       {
         "name": "Keranjang, pesanan, dan status",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       },
@@ -213,7 +213,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Ulasan dan reputasi",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       },

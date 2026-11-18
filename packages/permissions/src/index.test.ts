@@ -69,3 +69,12 @@ describe("canEditRecord", () => {
     expect(canEditRecord({ role: "VIEWER", userId: "u1", recordedBy: "u1", createdAt: hoursAgo(1), now })).toBe(false);
   });
 });
+
+describe("marketplace", () => {
+  it("hanya pemilik dan manajer yang boleh berjualan/membeli", () => {
+    expect(can("OWNER", "market.manage")).toBe(true);
+    expect(can("MANAGER", "market.manage")).toBe(true);
+    expect(can("WORKER", "market.read")).toBe(false);
+    expect(can("VIEWER", "market.manage")).toBe(false);
+  });
+});

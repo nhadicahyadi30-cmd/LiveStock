@@ -203,3 +203,54 @@ export const healthRecordCreate = z
 export type HealthRecordCreate = z.infer<typeof healthRecordCreate>;
 
 export const healthRecordComplete = z.object({ doneOn: anyDate.optional() });
+
+// ---------------------------------------------------------------- Tahap 3: Marketplace
+
+export const listingCategories = ["LIVESTOCK", "FEED", "MEDICINE", "EQUIPMENT", "PRODUCE"] as const;
+export const listingUnits = ["ekor", "kg", "butir", "liter", "karung", "paket", "unit"] as const;
+
+export const vendorProfileUpsert = z.object({
+  displayName: z.string().trim().min(2).max(100),
+  city: z.string().trim().min(2).max(80),
+  /** Nomor WhatsApp/telepon yang tampil ke pembeli. */
+  phone: z.string().trim().regex(/^\+?[0-9][0-9\s-]{7,18}$/, "Nomor telepon tidak valid"),
+  about: z.string().trim().max(500).optional(),
+});
+
+export const listingCreate = z.object({
+  title: z.string().trim().min(3).max(120),
+  category: z.enum(listingCategories),
+  description: z.string().trim().max(1000).optional(),
+  priceIdr: money,
+  unit: z.enum(listingUnits),
+  stock: z.number().nonnegative().max(100_000_000),
+  status: z.enum(["DRAFT", "PUBLISHED"]).default("PUBLISHED"),
+});
+export type ListingCreate = z.infer<typeof listingCreate>;
+
+export const listingUpdate = z
+  .object({
+    title: z.string().trim().min(3).max(120),
+    description: z.string().trim().max(1000),
+    priceIdr: money,
+    stock: z.number().nonnegative().max(100_000_000),
+    status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]),
+  })
+  .partial()
+  .refine((v) => Object.keys(v).length > 0, { message: "Tidak ada perubahan" });
+
+export const marketOrderCreate = z.object({
+  listingId: uuid,
+  quantity: z.number().positive().max(100_000_000),
+  note: z.string().trim().max(500).optional(),
+  clientId,
+});
+
+export const marketOrderActions = ["ACCEPT", "REJECT", "SHIP", "COMPLETE", "CANCEL"] as const;
+export const marketOrderAction = z.object({ action: z.enum(marketOrderActions) });
+
+export const marketReviewCreate = z.object({
+  orderId: uuid,
+  rating: z.number().int().min(1).max(5),
+  comment: z.string().trim().max(500).optional(),
+});

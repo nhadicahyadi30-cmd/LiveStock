@@ -524,3 +524,97 @@ model HealthRecord {
   @@index([organizationId, kind, status])
   @@map("health_records")
 }
+
+// ---------------------------------------------------------------- Tahap 3: Marketplace
+// Tabel marketplace bersifat lintas organisasi, jadi sengaja TIDAK memakai kolom organization_id
+// (kebijakan RLS standar tidak berlaku). Kebijakan khusus ada di prisma/sql/006_phase3.sql.
+
+enum ListingCategory {
+  LIVESTOCK
+  FEED
+  MEDICINE
+  EQUIPMENT
+  PRODUCE
+}
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum MarketOrderStatus {
+  PENDING
+  ACCEPTED
+  SHIPPED
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+model VendorProfile {
+  orgId       String   @id @map("org_id") @db.Uuid
+  displayName String   @map("display_name")
+  city        String
+  phone       String
+  about       String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("vendor_profiles")
+}
+
+model MarketListing {
+  id          String          @id @default(uuid(7)) @db.Uuid
+  sellerOrgId String          @map("seller_org_id") @db.Uuid
+  title       String
+  category    ListingCategory
+  description String?
+  priceIdr    Decimal         @map("price_idr") @db.Decimal(14, 2)
+  unit        String
+  stock       Decimal         @db.Decimal(14, 3)
+  status      ListingStatus   @default(DRAFT)
+  createdBy   String          @map("created_by") @db.Uuid
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, category, createdAt(sort: Desc)])
+  @@index([sellerOrgId])
+  @@map("market_listings")
+}
+
+model MarketOrder {
+  id           String            @id @default(uuid(7)) @db.Uuid
+  listingId    String            @map("listing_id") @db.Uuid
+  buyerOrgId   String            @map("buyer_org_id") @db.Uuid
+  sellerOrgId  String            @map("seller_org_id") @db.Uuid
+  listingTitle String            @map("listing_title")
+  unit         String
+  quantity     Decimal           @db.Decimal(14, 3)
+  unitPrice    Decimal           @map("unit_price") @db.Decimal(14, 2)
+  total        Decimal           @db.Decimal(16, 2)
+  status       MarketOrderStatus @default(PENDING)
+  buyerNote    String?           @map("buyer_note")
+  createdBy    String            @map("created_by") @db.Uuid
+  clientId     String?           @map("client_id") @db.Uuid
+  createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([buyerOrgId, clientId])
+  @@index([buyerOrgId, createdAt(sort: Desc)])
+  @@index([sellerOrgId, status])
+  @@map("market_orders")
+}
+
+model MarketReview {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  orderId     String   @unique @map("order_id") @db.Uuid
+  sellerOrgId String   @map("seller_org_id") @db.Uuid
+  buyerOrgId  String   @map("buyer_org_id") @db.Uuid
+  rating      Int
+  comment     String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([sellerOrgId])
+  @@map("market_reviews")
+}
