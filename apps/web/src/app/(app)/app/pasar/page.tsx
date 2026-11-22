@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useMe } from "@/components/app-shell";
 import { Empty, Modal, Skeleton, fmt, fmtDate, useToast } from "@/components/ui";
+import { PaymentModal } from "@/components/payment-panel";
 import { ShipmentModal } from "@/components/shipment-panel";
 import { api, ApiFailure } from "@/lib/api";
 
@@ -28,7 +29,7 @@ export default function PasarPage() {
   const [buy, setBuy] = useState<Order[]>([]);
   const [sell, setSell] = useState<Order[]>([]);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [modal, setModal] = useState<null | "profile" | "listing" | { order: Listing } | { review: Order } | { ship: Order; seller: boolean }>(null);
+  const [modal, setModal] = useState<null | "profile" | "listing" | { order: Listing } | { review: Order } | { ship: Order; seller: boolean } | { pay: Order }>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const allowed = role === "OWNER" || role === "MANAGER";
@@ -73,6 +74,7 @@ export default function PasarPage() {
         {seller && o.status === "ACCEPTED" && <><button className="btn btn-primary btn-sm" onClick={() => setModal({ ship: o, seller: true })}>Kirim</button><button className="btn btn-ghost btn-sm" onClick={() => { if (window.confirm("Batalkan pesanan ini? Stok dikembalikan.")) void act(o.id, "CANCEL", "Pesanan dibatalkan"); }}>Batalkan</button></>}
         {!seller && o.status === "PENDING" && <button className="btn btn-ghost btn-sm" onClick={() => void act(o.id, "CANCEL", "Pesanan dibatalkan")}>Batalkan</button>}
         {o.status === "SHIPPED" && <button className="btn btn-secondary btn-sm" onClick={() => setModal({ ship: o, seller })}>Pelacakan</button>}
+        {["ACCEPTED", "SHIPPED", "COMPLETED"].includes(o.status) && <button className="btn btn-ghost btn-sm" onClick={() => setModal({ pay: o })}>Pembayaran</button>}
         {!seller && o.status === "SHIPPED" && <button className="btn btn-primary btn-sm" onClick={() => void act(o.id, "COMPLETE", "Pesanan selesai")}>Barang diterima</button>}
         {!seller && o.status === "COMPLETED" && !o.reviewed && <button className="btn btn-secondary btn-sm" onClick={() => { setErr(null); setModal({ review: o }); }}>Beri ulasan</button>}
       </div>
@@ -135,6 +137,7 @@ export default function PasarPage() {
         <div className="field"><label htmlFor="note">Catatan untuk penjual</label><input id="note" name="note" className="input" maxLength={500} placeholder="opsional" /></div>
         {err && <div className="alert err">{err}</div>}<button className="btn btn-primary btn-block" disabled={busy}>{busy ? "Mengirim…" : "Kirim pesanan"}</button></form></Modal>)}
 
+      {modal && typeof modal === "object" && "pay" in modal && <PaymentModal orderId={modal.pay.id} title={modal.pay.listingTitle} onClose={() => setModal(null)} onChanged={load} />}
       {modal && typeof modal === "object" && "ship" in modal && <ShipmentModal orderId={modal.ship.id} title={modal.ship.listingTitle} status={modal.ship.status} seller={modal.seller} onClose={() => setModal(null)} onChanged={load} />}
       {modal && typeof modal === "object" && "review" in modal && (<Modal title="Beri ulasan" onClose={() => setModal(null)}><form onSubmit={(e) => review(e, (modal as { review: Order }).review)} className="stack">
         <div className="field"><label htmlFor="rating">Nilai</label><select id="rating" name="rating" className="input" defaultValue="5">{[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{"★".repeat(n)} ({n})</option>)}</select></div>

@@ -383,3 +383,10 @@ export const shipmentEventCreate = z.object({
   location: z.string().trim().max(120).optional(),
   note: z.string().trim().max(300).optional(),
 });
+
+// ---- Pembayaran / rekening bersama (tahap 7) ----
+export const PAYMENT_METHODS = ["TRANSFER", "QRIS", "COD"] as const;
+export const paymentUpsert = z.object({ method: z.enum(PAYMENT_METHODS), reference: z.string().trim().max(80).optional() });
+export const paymentAction = z
+  .object({ action: z.enum(["CONFIRM_RECEIVED", "DISPUTE", "REFUND"]), reason: z.string().trim().max(300).optional() })
+  .refine((v) => v.action !== "DISPUTE" || (v.reason?.length ?? 0) >= 5, { message: "Jelaskan alasan sengketa (minimal 5 huruf)", path: ["reason"] });

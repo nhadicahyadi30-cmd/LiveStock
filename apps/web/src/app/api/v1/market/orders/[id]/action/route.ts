@@ -32,6 +32,9 @@ export const POST = tenantRoute<{ id: string }>({ permission: "market.manage" },
     next = "SHIPPED";
   } else if (action === "COMPLETE") {
     if (!isBuyer) throw deny(); if (o.status !== "SHIPPED") throw bad();
+    const pay = await c.tx.marketPayment.findUnique({ where: { orderId: id } });
+    if (pay?.status === "DISPUTED") throw new ApiError(409, "PAYMENT_DISPUTED", "Pembayaran sedang disengketakan; selesaikan dulu dengan penjual");
+    if (pay && (pay.status === "HELD" || (pay.method === "COD" && pay.status === "AWAITING"))) await c.tx.marketPayment.update({ where: { id: pay.id }, data: { status: "RELEASED", releasedAt: new Date() } });
     next = "COMPLETED";
   } else {
     if (isBuyer && o.status === "PENDING") next = "CANCELLED";

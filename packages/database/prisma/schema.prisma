@@ -844,3 +844,27 @@ model MarketShipmentEvent {
   @@index([shipmentId, createdAt])
   @@map("market_shipment_events")
 }
+
+// Pembayaran pesanan pasar (rekening bersama, mode manual): tidak ada pihak ketiga yang menahan dana.
+// Status: AWAITING -> PROOF_SUBMITTED -> HELD -> RELEASED, atau DISPUTED -> REFUNDED.
+model MarketPayment {
+  id            String    @id @default(uuid(7)) @db.Uuid
+  orderId       String    @unique @map("order_id") @db.Uuid
+  buyerOrgId    String    @map("buyer_org_id") @db.Uuid
+  sellerOrgId   String    @map("seller_org_id") @db.Uuid
+  amount        Decimal   @db.Decimal(16, 2)
+  method        String
+  reference     String?
+  status        String    @default("AWAITING")
+  disputeReason String?   @map("dispute_reason")
+  submittedAt   DateTime? @map("submitted_at") @db.Timestamptz(6)
+  heldAt        DateTime? @map("held_at") @db.Timestamptz(6)
+  releasedAt    DateTime? @map("released_at") @db.Timestamptz(6)
+  refundedAt    DateTime? @map("refunded_at") @db.Timestamptz(6)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([buyerOrgId])
+  @@index([sellerOrgId, status])
+  @@map("market_payments")
+}

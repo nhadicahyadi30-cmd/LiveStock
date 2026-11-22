@@ -201,9 +201,9 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Pembayaran dan rekening bersama (escrow)",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
-        "note": "Butuh keputusan penyedia pembayaran."
+        "note": "Mode manual: pencatatan, konfirmasi penjual, sengketa. Penahanan dana sungguhan butuh penyedia pembayaran."
       },
       {
         "name": "Pengiriman dan logistik",

@@ -58,7 +58,7 @@ Jual beli ternak, pakan, dan sarana multi-vendor.
 - [~] Profil vendor dan verifikasi (Tahap 3)
 - [~] Katalog produk dan stok (Tahap 3)
 - [~] Keranjang, pesanan, dan status (Tahap 3)
-- [ ] Pembayaran dan rekening bersama (escrow) (Tahap 3): Butuh keputusan penyedia pembayaran.
+- [~] Pembayaran dan rekening bersama (escrow), mode manual (Tahap 7): pencatatan, konfirmasi penjual, sengketa. Penahanan dana sungguhan butuh penyedia pembayaran (Midtrans/Xendit).
 - [~] Pengiriman dan logistik (Tahap 7)
 - [~] Ulasan dan reputasi (Tahap 3)
 - [~] Harga pasar (Tahap 7)
