@@ -407,3 +407,7 @@ export const vetConsultationCreate = z.object({
   symptoms: z.string().trim().min(10, "Jelaskan gejalanya (minimal 10 huruf)").max(2000),
 });
 export const vetMessageCreate = z.object({ body: z.string().trim().min(1).max(2000) });
+
+// ---- Langganan (tahap 7) ----
+export const checkoutCreate = z.object({ plan: z.enum(["STARTER", "PRO", "BUSINESS"]), months: z.union([z.literal(1), z.literal(3), z.literal(6), z.literal(12)]) });
+export const operatorConfirm = z.object({ organizationId: uuid, number: z.string().trim().min(5).max(40) });

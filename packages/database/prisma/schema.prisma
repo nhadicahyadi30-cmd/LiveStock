@@ -119,6 +119,7 @@ model Organization {
   currencyCode String       @default("IDR") @map("currency_code")
   timezone     String       @default("Asia/Jakarta")
   plan         Plan         @default(FREE)
+  planExpiresAt DateTime?   @map("plan_expires_at") @db.Timestamptz(6)
   createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
   memberships  Membership[]
@@ -915,4 +916,24 @@ model VetMessage {
 
   @@index([consultationId, createdAt])
   @@map("vet_messages")
+}
+
+// ---------------------------------------------------------------- Langganan dan penagihan
+// Tagihan paket Nusa Ternak untuk organisasi. Pelunasan dikonfirmasi operator (transfer manual), lalu paket aktif.
+model SubscriptionInvoice {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  number         String
+  plan           Plan
+  months         Int
+  amount         Decimal   @db.Decimal(16, 2)
+  status         String    @default("PENDING")
+  dueOn          DateTime  @map("due_on") @db.Date
+  paidAt         DateTime? @map("paid_at") @db.Timestamptz(6)
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, number])
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("subscription_invoices")
 }

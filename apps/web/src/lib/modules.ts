@@ -60,7 +60,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Paket langganan dan penagihan",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
         "note": ""
       },

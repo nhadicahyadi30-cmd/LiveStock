@@ -1,5 +1,6 @@
 import { farmCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
+import { assertWithinPlan } from "@/server/plan-guard";
 import { pageOf, parsePagination } from "@/server/pagination";
 import { tenantRoute } from "@/server/tenant-guard";
 
@@ -22,6 +23,7 @@ export const GET = tenantRoute({ permission: "farm.read" }, async (c) => {
 // POST /api/v1/farms  -> membuat farm (izin farm.write)
 export const POST = tenantRoute({ permission: "farm.write" }, async (c) => {
   const input = farmCreate.parse(await c.req.json());
+  await assertWithinPlan(c.tx, c.organizationId, "farms");
 
   const farm = await c.tx.farm.create({
     data: {

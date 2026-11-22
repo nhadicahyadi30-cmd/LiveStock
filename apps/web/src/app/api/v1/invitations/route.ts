@@ -3,6 +3,7 @@ import { z } from "zod";
 import { clientIp, writeAudit } from "@/server/audit";
 import { INVITE_TTL_MS, newToken } from "@/server/auth-token";
 import { ApiError } from "@/server/errors";
+import { assertWithinPlan } from "@/server/plan-guard";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,7 @@ export const GET = tenantRoute({ permission: "members.manage" }, async (c) => {
 // POST /api/v1/invitations -> membuat tautan undangan. Tautan dikembalikan ke pengundang untuk dibagikan (mis. lewat WhatsApp).
 export const POST = tenantRoute({ permission: "members.manage" }, async (c) => {
   const input = body.parse(await c.req.json());
+  await assertWithinPlan(c.tx, c.organizationId, "members");
   const existing = await c.tx.membership.findFirst({ where: { status: "ACTIVE", user: { email: input.email } } });
   if (existing) throw new ApiError(409, "ALREADY_MEMBER", "Orang ini sudah menjadi anggota");
   const { token, hash } = newToken();

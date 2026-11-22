@@ -3,6 +3,7 @@ import { clientIp, writeAudit } from "@/server/audit";
 import { assertFarmAccess } from "@/server/farm-access";
 import { ApiError } from "@/server/errors";
 import { isOnline, newDeviceToken } from "@/server/iot";
+import { assertWithinPlan } from "@/server/plan-guard";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -33,6 +34,7 @@ export const GET = tenantRoute({ permission: "iot.read" }, async (c) => {
 // POST /api/v1/iot/devices -> mendaftarkan perangkat. Token HANYA ditampilkan sekali di respons ini.
 export const POST = tenantRoute({ permission: "iot.manage" }, async (c) => {
   const input = deviceCreate.parse(await c.req.json());
+  await assertWithinPlan(c.tx, c.organizationId, "devices");
   assertFarmAccess(c, input.farmId);
   const farm = await c.tx.farm.findUnique({ where: { organizationId_id: { organizationId: c.organizationId, id: input.farmId } } });
   if (!farm) throw new ApiError(404, "NOT_FOUND", "Farm tidak ditemukan");

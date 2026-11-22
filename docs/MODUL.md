@@ -23,7 +23,7 @@ Fondasi yang dipakai semua pilar.
 - [x] Audit log (Selesai): Jejak aksi penting, tidak bisa diubah.
 - [~] Registrasi, reset kata sandi, verifikasi email (Tahap 1)
 - [~] Anggota dan undangan (Tahap 1): Undang tim, atur role dan akses per farm.
-- [ ] Paket langganan dan penagihan (Tahap 4)
+- [~] Paket langganan dan penagihan (Tahap 4)
 - [ ] API terbuka dan webhook (Tahap 6)
 
 ## Smart Farm (MVP)
@@ -96,3 +96,14 @@ Prediksi dan rekomendasi dari data peternakan.
 - [ ] Asisten tanya-jawab peternakan (Tahap 6)
 
 Keterangan: `[x]` tersedia, `[~]` sebagian, `[ ]` direncanakan.
+
+## Langganan: cara mengaktifkan paket (operator)
+Pemilik organisasi memesan paket di menu Langganan, lalu transfer sesuai `BILLING_PAYMENT_INFO`. Setelah transfer masuk, operator platform mengaktifkan:
+
+```powershell
+curl -X POST http://localhost:3000/api/operator/billing/confirm `
+  -H "x-operator-token: <BILLING_OPERATOR_TOKEN>" -H "content-type: application/json" `
+  -d '{"organizationId":"<id organisasi>","number":"SUB-202611-12345"}'
+```
+
+Paket berbayar yang sudah lewat masa aktif otomatis diperlakukan sebagai Gratis (data tidak dihapus).
