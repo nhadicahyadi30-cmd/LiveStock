@@ -56,7 +56,12 @@ type PersonKey = keyof typeof PEOPLE;
 async function main(): Promise<void> {
   const exists = await prisma.user.findUnique({ where: { email: PEOPLE.budi.email } });
   if (exists) {
-    console.log("Data dummy sudah ada (budi@demo.test). Tidak ada yang diubah.");
+    const done = await prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT set_config('app.organization_id', ${"00000000-0000-0000-0000-000000000000"}, true)`;
+      return (await tx.$queryRaw<{ n: bigint }[]>`SELECT count(*) AS n FROM financing_partners`)[0]!.n;
+    }).catch(() => 0n);
+    if (done > 0n) console.log("Data dummy sudah ada (budi@demo.test). Tidak ada yang diubah.");
+    else console.log("Data dummy ada tetapi tidak lengkap (seed sebelumnya gagal di tengah). Kosongkan database: pnpm db:push --force-reset, lalu pnpm db:setup dan pnpm db:seed:demo.");
     return;
   }
   const speciesRows = await prisma.species.findMany();
@@ -140,14 +145,14 @@ async function main(): Promise<void> {
     }
     await tx.sensorReading.createMany({ data: rows });
     for (const r of rules) {
-      const rule = await tx.alertRule.create({ data: { organizationId: org, deviceId: dev.id, ...r } });
+      const rule = await tx.alertRule.create({ data: { organizationId: org, deviceId: dev.id, createdBy: user, ...r } });
       const latest = rows.filter((x) => x.metric === r.metric).at(-1)!.value as number;
       const violated = r.op === "GT" ? latest > r.threshold : latest < r.threshold;
       if (violated) await tx.alertEvent.create({ data: { organizationId: org, ruleId: rule.id, deviceId: dev.id, ruleName: r.name, metric: r.metric, op: r.op, threshold: r.threshold, value: latest, triggeredAt: ago(3) } });
       else if (rnd() < 0.5) await tx.alertEvent.create({ data: { organizationId: org, ruleId: rule.id, deviceId: dev.id, ruleName: r.name, metric: r.metric, op: r.op, threshold: r.threshold, value: r.threshold + (r.op === "GT" ? 1 : -1), triggeredAt: ago(30), resolvedAt: ago(27) } });
     }
-    await tx.deviceCommand.create({ data: { organizationId: org, deviceId: dev.id, command: "set_fan", payload: { on: true }, status: "ACKED", sentAt: ago(20), ackedAt: ago(19.9), result: "ok" } });
-    await tx.deviceCommand.create({ data: { organizationId: org, deviceId: dev.id, command: "set_fan", payload: { on: false }, status: "PENDING" } });
+    await tx.deviceCommand.create({ data: { organizationId: org, deviceId: dev.id, createdBy: user, command: "set_fan", payload: { on: true }, status: "ACKED", sentAt: ago(20), ackedAt: ago(19.9), result: "ok" } });
+    await tx.deviceCommand.create({ data: { organizationId: org, deviceId: dev.id, createdBy: user, command: "set_fan", payload: { on: false }, status: "PENDING" } });
     return dev.id;
   }
 
@@ -214,9 +219,9 @@ async function main(): Promise<void> {
     await finance(tx, budiOrg, uid.siti, fin);
     for (const [cat, amt] of [["PAKAN", 22e6], ["KESEHATAN", 3e6], ["TENAGA_KERJA", 9.5e6], ["LISTRIK_AIR", 2e6]] as const)
       await tx.budget.create({ data: { organizationId: budiOrg, month: ym(0), category: cat, amount: amt.toFixed(2) } });
-    await tx.invoice.create({ data: { organizationId: budiOrg, number: "INV-2026-001", customerName: "Koperasi Susu Lembang", customerContact: "0812-0000-1111", issueOn: day(-20), dueOn: day(-6), description: "Susu segar 2 minggu", amount: "14500000.00", status: "OPEN" } });
-    await tx.invoice.create({ data: { organizationId: budiOrg, number: "INV-2026-002", customerName: "RPH Bandung", issueOn: day(-45), dueOn: day(-30), description: "Sapi potong 2 ekor", amount: "43000000.00", status: "PAID", paidOn: day(-28) } });
-    await tx.invoice.create({ data: { organizationId: budiOrg, number: "INV-2026-003", customerName: "Warung Sate Pak Slamet", issueOn: day(-2), dueOn: day(12), description: "Kambing 5 ekor", amount: "12500000.00", status: "OPEN" } });
+    await tx.invoice.create({ data: { organizationId: budiOrg, createdBy: uid.siti, number: "INV-2026-001", customerName: "Koperasi Susu Lembang", customerContact: "0812-0000-1111", issueOn: day(-20), dueOn: day(-6), description: "Susu segar 2 minggu", amount: "14500000.00", status: "OPEN" } });
+    await tx.invoice.create({ data: { organizationId: budiOrg, createdBy: uid.siti, number: "INV-2026-002", customerName: "RPH Bandung", issueOn: day(-45), dueOn: day(-30), description: "Sapi potong 2 ekor", amount: "43000000.00", status: "PAID", paidOn: day(-28) } });
+    await tx.invoice.create({ data: { organizationId: budiOrg, createdBy: uid.siti, number: "INV-2026-003", customerName: "Warung Sate Pak Slamet", issueOn: day(-2), dueOn: day(12), description: "Kambing 5 ekor", amount: "12500000.00", status: "OPEN" } });
 
     // Harga pasar (untuk prakiraan).
     for (const [commodity, unit, base, slope] of [["SAPI_HIDUP", "kg", 56000, 120], ["KAMBING_HIDUP", "kg", 78000, -60], ["SUSU_SAPI", "liter", 7200, 10], ["PAKAN_JADI", "kg", 6100, 15]] as const)
@@ -230,8 +235,8 @@ async function main(): Promise<void> {
     await tx.webhookDelivery.create({ data: { organizationId: budiOrg, endpointId: hook.id, event: "alert.triggered", payload: { demo: true }, status: "FAILED", attempts: 3, responseStatus: 500, lastError: "HTTP 500", nextAttemptAt: day(1) } });
 
     // Langganan.
-    await tx.subscriptionInvoice.create({ data: { organizationId: budiOrg, number: "SUB-2026-0001", plan: "PRO", months: 3, amount: "897000.00", status: "PAID", dueOn: day(-15), paidAt: ago(24 * 15) } });
-    await tx.subscriptionInvoice.create({ data: { organizationId: budiOrg, number: "SUB-2026-0002", plan: "PRO", months: 1, amount: "299000.00", status: "PENDING", dueOn: day(7) } });
+    await tx.subscriptionInvoice.create({ data: { organizationId: budiOrg, createdBy: uid.budi, number: "SUB-2026-0001", plan: "PRO", months: 3, amount: "897000.00", status: "PAID", dueOn: day(-15), paidAt: ago(24 * 15) } });
+    await tx.subscriptionInvoice.create({ data: { organizationId: budiOrg, createdBy: uid.budi, number: "SUB-2026-0002", plan: "PRO", months: 1, amount: "299000.00", status: "PENDING", dueOn: day(7) } });
 
     // IoT: suhu/kelembapan kandang dan kamera.
     const iot = await device(tx, budiOrg, uid.budi, lembang.id, "Sensor Kandang A", "Kandang A", "budi_a", { temperature: [24, 31], humidity: [60, 85] }, [{ name: "Suhu kandang tinggi", metric: "temperature", op: "GT", threshold: 32 }, { name: "Kelembapan rendah", metric: "humidity", op: "LT", threshold: 50 }]);
@@ -267,11 +272,11 @@ async function main(): Promise<void> {
     ];
     await finance(tx, aniOrg, uid.ani, fin);
     for (const [cat, amt] of [["PAKAN", 60e6], ["BIBIT", 45e6]] as const) await tx.budget.create({ data: { organizationId: aniOrg, month: ym(0), category: cat, amount: amt.toFixed(2) } });
-    await tx.invoice.create({ data: { organizationId: aniOrg, number: "INV-AM-001", customerName: "Pedagang Pasar Cianjur", issueOn: day(-18), dueOn: day(-4), description: "Ayam hidup panen", amount: "113400000.00", status: "OPEN" } });
+    await tx.invoice.create({ data: { organizationId: aniOrg, createdBy: uid.ani, number: "INV-AM-001", customerName: "Pedagang Pasar Cianjur", issueOn: day(-18), dueOn: day(-4), description: "Ayam hidup panen", amount: "113400000.00", status: "OPEN" } });
     for (const [commodity, unit, base, slope] of [["AYAM_HIDUP", "kg", 21000, -90], ["TELUR_AYAM", "kg", 28500, 110], ["JAGUNG_PAKAN", "kg", 5800, 25]] as const)
       for (let w = 12; w >= 0; w--) await tx.marketPrice.create({ data: { organizationId: aniOrg, commodity, unit, price: (base + slope * (12 - w) + between(-200, 200)).toFixed(2), region: "Jawa Barat", source: "Pinsar", observedOn: day(-w * 7), recordedBy: uid.ani } });
     await device(tx, aniOrg, uid.ani, farm.id, "Sensor House 1", "House 1", "ani_h1", { temperature: [27, 33], humidity: [55, 75], ammonia: [8, 16] }, [{ name: "Amonia berbahaya", metric: "ammonia", op: "GT", threshold: 25 }, { name: "Suhu terlalu tinggi", metric: "temperature", op: "GT", threshold: 34 }], { alarm: { metric: "ammonia", value: 28 } });
-    await tx.subscriptionInvoice.create({ data: { organizationId: aniOrg, number: "SUB-2026-0101", plan: "STARTER", months: 1, amount: "99000.00", status: "PAID", dueOn: day(-20), paidAt: ago(24 * 20) } });
+    await tx.subscriptionInvoice.create({ data: { organizationId: aniOrg, createdBy: uid.ani, number: "SUB-2026-0101", plan: "STARTER", months: 1, amount: "99000.00", status: "PAID", dueOn: day(-20), paidAt: ago(24 * 20) } });
     await notify(tx, aniOrg, uid.ani, [
       { kind: "iot.alert", title: "Alarm: Amonia berbahaya", body: "Sensor House 1 membaca 28 ppm", href: "/app/iot" },
       { kind: "billing.invoice", title: "Faktur langganan lunas", href: "/app/langganan", read: true },
@@ -312,13 +317,13 @@ async function main(): Promise<void> {
       ["vitamin", "Vitamin ternak multivitamin", "MEDICINE", 65000, "botol", 200, "PUBLISHED"],
       ["feeder", "Tempat pakan ayam otomatis", "EQUIPMENT", 45000, "buah", 80, "PUBLISHED"],
       ["draft", "Terpal kolam 4x6 m", "EQUIPMENT", 410000, "lembar", 15, "DRAFT"],
-    ] as const) { const l = await tx.marketListing.create({ data: { sellerOrgId: tokoOrg, title, category, description: `${title} - kualitas terjamin.`, priceIdr: price.toFixed(2), unit, stock: stock.toFixed(3), status } }); listings[key] = l.id; }
+    ] as const) { const l = await tx.marketListing.create({ data: { createdBy: uid.toko, sellerOrgId: tokoOrg, title, category, description: `${title} - kualitas terjamin.`, priceIdr: price.toFixed(2), unit, stock: stock.toFixed(3), status } }); listings[key] = l.id; }
   });
   const sellFarm: Record<string, string> = {};
   await inOrg(budiOrg, uid.budi, async (tx) => {
     await tx.vendorProfile.create({ data: { orgId: budiOrg, displayName: "Sumber Rejeki Farm", city: "Lembang", phone: "0813-1111-2222", about: "Sapi potong dan kambing siap jual, dikirim langsung dari kandang." } });
     for (const [key, title, category, price, unit, stock] of [["kambing", "Kambing Etawa jantan siap kurban", "LIVESTOCK", 3_200_000, "ekor", 20], ["sapi", "Sapi Limousin 400 kg", "LIVESTOCK", 22_500_000, "ekor", 5]] as const) {
-      const l = await tx.marketListing.create({ data: { sellerOrgId: budiOrg, title, category, description: title, priceIdr: price.toFixed(2), unit, stock: stock.toFixed(3), status: "PUBLISHED" } }); sellFarm[key] = l.id;
+      const l = await tx.marketListing.create({ data: { createdBy: uid.budi, sellerOrgId: budiOrg, title, category, description: title, priceIdr: price.toFixed(2), unit, stock: stock.toFixed(3), status: "PUBLISHED" } }); sellFarm[key] = l.id;
     }
   });
 
@@ -326,14 +331,14 @@ async function main(): Promise<void> {
   type OrderStatus = "PENDING" | "ACCEPTED" | "SHIPPED" | "COMPLETED" | "REJECTED" | "CANCELLED";
   async function order(buyer: string, buyerUser: string, seller: string, sellerUser: string, listingId: string, title: string, unit: string, qty: number, price: number, status: OrderStatus, flow: { shipment?: "DIKEMAS" | "DALAM_PERJALANAN" | "TIBA_DI_TUJUAN"; payment?: "AWAITING" | "PROOF_SUBMITTED" | "HELD" | "RELEASED" | "DISPUTED"; review?: number } = {}) {
     const total = (qty * price).toFixed(2);
-    const o = await inOrg(buyer, buyerUser, (tx) => tx.marketOrder.create({ data: { listingId, buyerOrgId: buyer, sellerOrgId: seller, listingTitle: title, unit, quantity: qty.toFixed(3), unitPrice: price.toFixed(2), total, status, buyerNote: "Mohon dikirim pagi hari" } }));
+    const o = await inOrg(buyer, buyerUser, (tx) => tx.marketOrder.create({ data: { createdBy: buyerUser, listingId, buyerOrgId: buyer, sellerOrgId: seller, listingTitle: title, unit, quantity: qty.toFixed(3), unitPrice: price.toFixed(2), total, status, buyerNote: "Mohon dikirim pagi hari" } }));
     if (flow.payment) {
       await inOrg(buyer, buyerUser, (tx) => tx.marketPayment.create({ data: { orderId: o.id, buyerOrgId: buyer, sellerOrgId: seller, amount: total, method: "TRANSFER", reference: "TRF-DEMO-" + o.id.slice(-4), status: flow.payment!, ...(flow.payment !== "AWAITING" ? { submittedAt: ago(48) } : {}), ...(["HELD", "RELEASED"].includes(flow.payment!) ? { heldAt: ago(40) } : {}), ...(flow.payment === "RELEASED" ? { releasedAt: ago(10) } : {}), ...(flow.payment === "DISPUTED" ? { disputeReason: "Barang belum sesuai pesanan" } : {}) } }));
     }
     if (flow.shipment) {
       const sh = await inOrg(seller, sellerUser, (tx) => tx.marketShipment.create({ data: { orderId: o.id, sellerOrgId: seller, buyerOrgId: buyer, method: "KURIR", courier: "J&T Cargo", trackingNumber: "JT" + o.id.slice(-8).toUpperCase(), fee: "35000.00", etaOn: day(2) } }));
       const steps = (["DIKEMAS", "DALAM_PERJALANAN", "TIBA_DI_TUJUAN"] as const).slice(0, (["DIKEMAS", "DALAM_PERJALANAN", "TIBA_DI_TUJUAN"] as const).indexOf(flow.shipment) + 1);
-      for (const [i, s] of steps.entries()) await inOrg(seller, sellerUser, (tx) => tx.marketShipmentEvent.create({ data: { shipmentId: sh.id, sellerOrgId: seller, buyerOrgId: buyer, status: s, location: ["Gudang penjual", "Hub Bandung", "Alamat pembeli"][i]! } }));
+      for (const [i, s] of steps.entries()) await inOrg(seller, sellerUser, (tx) => tx.marketShipmentEvent.create({ data: { createdBy: sellerUser, shipmentId: sh.id, sellerOrgId: seller, buyerOrgId: buyer, status: s, location: ["Gudang penjual", "Hub Bandung", "Alamat pembeli"][i]! } }));
     }
     if (flow.review) await inOrg(buyer, buyerUser, (tx) => tx.marketReview.create({ data: { orderId: o.id, sellerOrgId: seller, buyerOrgId: buyer, rating: flow.review!, comment: flow.review! >= 4 ? "Barang sesuai dan pengiriman cepat." : "Pengiriman agak lambat." } }));
   }
@@ -345,12 +350,12 @@ async function main(): Promise<void> {
   await order(budiOrg, uid.budi, tokoOrg, uid.toko, listings.feeder!, "Tempat pakan ayam otomatis", "buah", 5, 45000, "REJECTED");
   await order(aniOrg, uid.ani, budiOrg, uid.budi, sellFarm.kambing!, "Kambing Etawa jantan siap kurban", "ekor", 4, 3_200_000, "ACCEPTED", { payment: "AWAITING" });
   await order(dediOrg, uid.dedi, budiOrg, uid.budi, sellFarm.kambing!, "Kambing Etawa jantan siap kurban", "ekor", 1, 3_200_000, "SHIPPED", { shipment: "DIKEMAS", payment: "DISPUTED" });
-  await inOrg(aniOrg, uid.ani, (tx) => tx.marketOrder.create({ data: { listingId: listings.draft!, buyerOrgId: aniOrg, sellerOrgId: tokoOrg, listingTitle: "Terpal kolam 4x6 m", unit: "lembar", quantity: "2.000", unitPrice: "410000.00", total: "820000.00", status: "CANCELLED" } }));
+  await inOrg(aniOrg, uid.ani, (tx) => tx.marketOrder.create({ data: { createdBy: uid.ani, listingId: listings.draft!, buyerOrgId: aniOrg, sellerOrgId: tokoOrg, listingTitle: "Terpal kolam 4x6 m", unit: "lembar", quantity: "2.000", unitPrice: "410000.00", total: "820000.00", status: "CANCELLED" } }));
 
   // Dokter hewan.
   await inOrg(vetOrg, uid.rina, (tx) => tx.vetProfile.create({ data: { orgId: vetOrg, displayName: "drh. Rina Mahendra", city: "Bandung", specialty: "Ruminansia dan unggas", licenseNo: "DEMO-STRV-0001", about: "Pengalaman 9 tahun menangani sapi perah dan ayam. Konsultasi lewat chat.", accepting: true } }));
   async function consult(farmOrg: string, farmUser: string, farmName: string, subject: string, species: string, symptoms: string, status: "OPEN" | "CLOSED", chat: [boolean, string][]) {
-    const c = await inOrg(farmOrg, farmUser, (tx) => tx.vetConsultation.create({ data: { farmOrgId: farmOrg, vetOrgId: vetOrg, farmName, subject, species, symptoms, status } }));
+    const c = await inOrg(farmOrg, farmUser, (tx) => tx.vetConsultation.create({ data: { createdBy: farmUser, farmOrgId: farmOrg, vetOrgId: vetOrg, farmName, subject, species, symptoms, status } }));
     for (const [fromFarm, body] of chat) {
       const [org, user] = fromFarm ? [farmOrg, farmUser] : [vetOrg, uid.rina];
       await inOrg(org, user, (tx) => tx.vetMessage.create({ data: { consultationId: c.id, farmOrgId: farmOrg, vetOrgId: vetOrg, authorOrgId: org, authorUserId: user, body } }));
