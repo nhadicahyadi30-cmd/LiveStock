@@ -82,7 +82,7 @@ Sensor dan otomasi kandang dan kolam.
 - [~] Sensor kolam: pH, oksigen, suhu, salinitas (Tahap 5)
 - [~] Alarm dan ambang batas otomatis (Tahap 5)
 - [~] Pakan dan minum otomatis (Tahap 5)
-- [ ] Kamera dan pemantauan visual (Tahap 5)
+- [~] Kamera dan pemantauan visual (foto berkala, bukan video langsung) (Tahap 5)
 - [~] Grafik sensor waktu nyata (Tahap 5)
 
 ## Smart Ternak (AI)

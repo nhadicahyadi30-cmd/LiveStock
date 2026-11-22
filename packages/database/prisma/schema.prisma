@@ -1025,3 +1025,18 @@ model FinancingApplication {
   @@index([organizationId, createdAt(sort: Desc)])
   @@map("financing_applications")
 }
+
+// Foto kamera kandang yang dikirim perangkat lewat HTTP (ESP32-CAM, Node-RED). Disimpan terbatas (lihat server/snapshots.ts).
+model CameraSnapshot {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  deviceId       String   @map("device_id") @db.Uuid
+  contentType    String   @map("content_type")
+  sizeBytes      Int      @map("size_bytes")
+  data           Bytes
+  capturedAt     DateTime @default(now()) @map("captured_at") @db.Timestamptz(6)
+
+  @@index([deviceId, capturedAt(sort: Desc)])
+  @@index([organizationId, capturedAt(sort: Desc)])
+  @@map("camera_snapshots")
+}

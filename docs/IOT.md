@@ -41,6 +41,14 @@ Perintah yang sudah diambil berstatus *Terkirim*, setelah `ack` menjadi *Dikonfi
 Di halaman perangkat → **Tambah alarm** (mis. `temperature` lebih dari 32).
 Saat nilai melewati batas, pemilik dan manajer mendapat notifikasi (lonceng di aplikasi). Alarm otomatis selesai saat nilai kembali normal, dan tidak mengirim notifikasi berulang selama masih berlangsung.
 
+## Kamera (foto berkala)
+Perangkat yang sama (satu token) bisa mengirim foto: body = berkas gambar mentah (JPEG/PNG/WEBP, maks. 1,5 MB), minimal 5 detik antar foto.
+
+```
+curl -X POST {BASE_URL}/api/iot/v1/snapshots -H "Authorization: Bearer nt_dev_..." -H "Content-Type: image/jpeg" --data-binary @foto.jpg
+```
+Di Node-RED: node **http request** (POST, "Send body as: binary buffer") dengan header `Authorization`. ESP32-CAM: ambil `camera_fb_t`, lalu POST `fb->buf` sepanjang `fb->len` memakai `HTTPClient`. Jenis gambar ditentukan dari isi file, bukan header. Foto tampil di menu **Kamera kandang**; disimpan 100 foto terakhir atau 14 hari per kamera. Ini foto berkala, bukan video langsung; pengenalan gambar (mis. hitung ternak) belum ada.
+
 ## Node-RED
 Impor `docs/nodered-flow.json` (menu ☰ → Import). Ganti alamat aplikasi dan token di node **Konfigurasi**, lalu ganti isi node fungsi dengan pembacaan sensor Anda.
 
@@ -52,4 +60,4 @@ Lihat contoh di halaman perangkat (tab ESP32). Gunakan HTTPS bila aplikasi dipas
 - Perangkat hanya bisa menulis data ke perangkatnya sendiri. Perangkat nonaktif ditolak (`403`).
 - Batas laju disimpan di memori proses. Untuk lebih dari satu instans server, pindahkan ke Redis.
 - Data sensor menumpuk cepat (30 detik sekali = ±2.900 baris per metrik per hari). Rencanakan retensi/rollup (mis. hapus data mentah > 90 hari) sebelum dipakai skala besar.
-- Belum ada: MQTT langsung, kamera/video, dan penjadwalan otomatis perintah. Semuanya rencana lanjutan.
+- Belum ada: MQTT langsung, video langsung, dan penjadwalan otomatis perintah. Semuanya rencana lanjutan.

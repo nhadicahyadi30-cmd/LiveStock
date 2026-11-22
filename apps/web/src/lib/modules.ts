@@ -299,7 +299,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Kamera dan pemantauan visual",
-        "status": "planned",
+        "status": "progress",
         "phase": 5,
         "note": ""
       },
