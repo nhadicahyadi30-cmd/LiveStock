@@ -2,6 +2,7 @@ import { feedRecordCreate, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { pageOf, parsePagination } from "@/server/pagination";
 import { resolveTarget } from "@/server/record-target";
+import { emitEvent } from "@/server/webhooks";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -54,5 +55,6 @@ export const POST = tenantRoute({ permission: "records.create" }, async (c) => {
     { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) },
     { action: "feed_record.create", entityType: "feed_record", entityId: record.id, after: { feed: feedType.name, quantityKg: input.quantityKg } },
   );
+  await emitEvent(c.tx, c.organizationId, "feed_record.created", { id: record.id, batchId: record.batchId, givenOn: record.givenOn.toISOString().slice(0, 10), quantityKg: Number(record.quantityKg) });
   return Response.json({ data: record }, { status: 201 });
 });

@@ -937,3 +937,53 @@ model SubscriptionInvoice {
   @@index([organizationId, createdAt(sort: Desc)])
   @@map("subscription_invoices")
 }
+
+// ---------------------------------------------------------------- API terbuka dan webhook
+model ApiKey {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  name           String
+  keyPrefix      String    @map("key_prefix")
+  keyHash        String    @unique @map("key_hash")
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUsedAt     DateTime? @map("last_used_at") @db.Timestamptz(6)
+  revokedAt      DateTime? @map("revoked_at") @db.Timestamptz(6)
+
+  @@index([organizationId])
+  @@map("api_keys")
+}
+
+model WebhookEndpoint {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  url            String
+  secret         String
+  events         String[]
+  active         Boolean   @default(true)
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([organizationId, id])
+  @@index([organizationId])
+  @@map("webhook_endpoints")
+}
+
+model WebhookDelivery {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  endpointId     String    @map("endpoint_id") @db.Uuid
+  event          String
+  payload        Json
+  status         String    @default("PENDING")
+  attempts       Int       @default(0)
+  responseStatus Int?      @map("response_status")
+  lastError      String?   @map("last_error")
+  nextAttemptAt  DateTime  @default(now()) @map("next_attempt_at") @db.Timestamptz(6)
+  deliveredAt    DateTime? @map("delivered_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@index([status, nextAttemptAt])
+  @@map("webhook_deliveries")
+}

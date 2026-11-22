@@ -66,7 +66,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "API terbuka dan webhook",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
         "note": ""
       }

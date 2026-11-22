@@ -411,3 +411,12 @@ export const vetMessageCreate = z.object({ body: z.string().trim().min(1).max(20
 // ---- Langganan (tahap 7) ----
 export const checkoutCreate = z.object({ plan: z.enum(["STARTER", "PRO", "BUSINESS"]), months: z.union([z.literal(1), z.literal(3), z.literal(6), z.literal(12)]) });
 export const operatorConfirm = z.object({ organizationId: uuid, number: z.string().trim().min(5).max(40) });
+
+// ---- API terbuka dan webhook (tahap 7) ----
+export const WEBHOOK_EVENTS = ["iot.alert.opened", "iot.alert.resolved", "feed_record.created", "production_record.created", "health_record.created"] as const;
+export const apiKeyCreate = z.object({ name: z.string().trim().min(2).max(60) });
+export const webhookCreate = z.object({
+  url: z.string().trim().url().max(500),
+  events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length),
+});
+export const webhookPatch = z.object({ active: z.boolean().optional(), events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).optional() });

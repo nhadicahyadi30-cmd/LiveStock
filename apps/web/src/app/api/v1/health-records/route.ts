@@ -2,6 +2,7 @@ import { healthRecordCreate, healthKinds, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { pageOf, parsePagination } from "@/server/pagination";
 import { resolveTarget } from "@/server/record-target";
+import { emitEvent } from "@/server/webhooks";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -44,5 +45,6 @@ export const POST = tenantRoute({ permission: "records.create" }, async (c) => {
     data: { ...rest, status: isDone ? "DONE" : input.kind === "VACCINATION" ? "PLANNED" : "ACTIVE", doneOn: isDone ? input.eventOn : null, organizationId: c.organizationId, recordedBy: c.userId },
   });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "health_record.create", entityType: "health_record", entityId: record.id, after: { kind: record.kind, title: record.title } });
+  await emitEvent(c.tx, c.organizationId, "health_record.created", { id: record.id, kind: record.kind, title: record.title, status: record.status });
   return Response.json({ data: record }, { status: 201 });
 });

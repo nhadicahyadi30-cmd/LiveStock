@@ -40,6 +40,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     { href: "/app/laporan", label: "Laporan", icon: "download" },
     { href: "/app/anggota", label: "Anggota", icon: "users" },
     { href: "/app/langganan", label: "Langganan", icon: "coin" },
+    { href: "/app/integrasi", label: "Integrasi", icon: "cpu" },
     { href: "/app/modul", label: "Semua modul", icon: "grid" },
   ] },
 ];

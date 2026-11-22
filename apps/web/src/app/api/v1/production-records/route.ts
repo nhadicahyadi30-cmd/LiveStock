@@ -2,6 +2,7 @@ import { PRODUCTION_UNIT, productionRecordCreate, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { pageOf, parsePagination } from "@/server/pagination";
 import { resolveTarget } from "@/server/record-target";
+import { emitEvent } from "@/server/webhooks";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -42,5 +43,6 @@ export const POST = tenantRoute({ permission: "records.create" }, async (c) => {
     { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) },
     { action: "production_record.create", entityType: "production_record", entityId: record.id, after: { kind: input.kind, quantity: input.quantity } },
   );
+  await emitEvent(c.tx, c.organizationId, "production_record.created", { id: record.id, batchId: record.batchId, kind: record.kind, quantity: Number(record.quantity), unit: record.unit });
   return Response.json({ data: record }, { status: 201 });
 });

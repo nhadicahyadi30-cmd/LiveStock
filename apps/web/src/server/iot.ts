@@ -2,6 +2,7 @@ import { prisma, withTenant, type Tx } from "@sl/database";
 import { IOT_MAX_READINGS, METRIC_INFO, metricName, readingsPayload } from "@sl/validation";
 import { createHash, randomBytes } from "node:crypto";
 import { ApiError } from "./errors";
+import { emitEvent } from "./webhooks";
 
 export const ONLINE_WINDOW_MS = 5 * 60_000;
 const MAX_AGE_MS = 7 * 864e5;
@@ -97,9 +98,11 @@ async function evaluateRules(tx: Tx, dev: DeviceAuth, rows: { metric: string; va
       const info = METRIC_INFO[rule.metric];
       const body = `${dev.name}: ${info?.label ?? rule.metric} ${v}${info?.unit ?? ""} (batas ${rule.op === "GT" ? "maks." : "min."} ${rule.threshold}${info?.unit ?? ""})`;
       if (recipients.length > 0) await tx.notification.createMany({ data: recipients.map((m) => ({ organizationId: dev.organizationId, userId: m.userId, kind: "iot.alert", title: `Alarm: ${rule.name}`, body, href: `/app/iot/${dev.id}` })) });
+      await emitEvent(tx, dev.organizationId, "iot.alert.opened", { deviceId: dev.id, device: dev.name, rule: rule.name, metric: rule.metric, value: v, op: rule.op, threshold: rule.threshold });
       fired++;
     } else if (!violated && open) {
       await tx.alertEvent.updateMany({ where: { ruleId: rule.id, resolvedAt: null }, data: { resolvedAt: new Date() } });
+      await emitEvent(tx, dev.organizationId, "iot.alert.resolved", { deviceId: dev.id, device: dev.name, rule: rule.name, metric: rule.metric, value: v });
     }
   }
   return fired;

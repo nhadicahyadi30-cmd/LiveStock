@@ -24,7 +24,7 @@ Fondasi yang dipakai semua pilar.
 - [~] Registrasi, reset kata sandi, verifikasi email (Tahap 1)
 - [~] Anggota dan undangan (Tahap 1): Undang tim, atur role dan akses per farm.
 - [~] Paket langganan dan penagihan (Tahap 4)
-- [ ] API terbuka dan webhook (Tahap 6)
+- [~] API terbuka dan webhook (Tahap 6)
 
 ## Smart Farm (MVP)
 
