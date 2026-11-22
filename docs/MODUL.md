@@ -59,7 +59,7 @@ Jual beli ternak, pakan, dan sarana multi-vendor.
 - [~] Katalog produk dan stok (Tahap 3)
 - [~] Keranjang, pesanan, dan status (Tahap 3)
 - [ ] Pembayaran dan rekening bersama (escrow) (Tahap 3): Butuh keputusan penyedia pembayaran.
-- [ ] Pengiriman dan logistik (Tahap 3)
+- [~] Pengiriman dan logistik (Tahap 7)
 - [~] Ulasan dan reputasi (Tahap 3)
 - [~] Harga pasar (Tahap 7)
 

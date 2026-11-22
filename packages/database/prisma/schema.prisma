@@ -809,3 +809,38 @@ model MarketPrice {
   @@index([organizationId, commodity, observedOn(sort: Desc)])
   @@map("market_prices")
 }
+
+// Pengiriman pesanan pasar: satu pengiriman per pesanan, dengan riwayat pelacakan yang tidak bisa diubah.
+model MarketShipment {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  orderId        String    @unique @map("order_id") @db.Uuid
+  sellerOrgId    String    @map("seller_org_id") @db.Uuid
+  buyerOrgId     String    @map("buyer_org_id") @db.Uuid
+  method         String
+  courier        String?
+  trackingNumber String?   @map("tracking_number")
+  fee            Decimal   @default(0) @db.Decimal(14, 2)
+  etaOn          DateTime? @map("eta_on") @db.Date
+  note           String?
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([sellerOrgId])
+  @@index([buyerOrgId])
+  @@map("market_shipments")
+}
+
+model MarketShipmentEvent {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  shipmentId  String   @map("shipment_id") @db.Uuid
+  sellerOrgId String   @map("seller_org_id") @db.Uuid
+  buyerOrgId  String   @map("buyer_org_id") @db.Uuid
+  status      String
+  location    String?
+  note        String?
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([shipmentId, createdAt])
+  @@map("market_shipment_events")
+}

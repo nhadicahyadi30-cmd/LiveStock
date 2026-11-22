@@ -364,3 +364,22 @@ export const priceCreate = z.object({
   source: z.string().trim().max(80).optional(),
   observedOn: pastOrToday,
 });
+
+// ---- Pengiriman (tahap 7) ----
+export const SHIPPING_METHODS = ["KURIR", "ANTAR_SENDIRI", "AMBIL_SENDIRI"] as const;
+export const SHIPMENT_STATUSES = ["DIKEMAS", "DISERAHKAN_KURIR", "DALAM_PERJALANAN", "TIBA_DI_TUJUAN", "GAGAL_KIRIM"] as const;
+export const shipmentUpsert = z
+  .object({
+    method: z.enum(SHIPPING_METHODS),
+    courier: z.string().trim().max(60).optional(),
+    trackingNumber: z.string().trim().max(60).optional(),
+    fee: z.number().nonnegative().max(1_000_000_000).default(0),
+    etaOn: z.coerce.date().optional(),
+    note: z.string().trim().max(300).optional(),
+  })
+  .refine((v) => v.method !== "KURIR" || !!v.courier, { message: "Nama kurir wajib diisi", path: ["courier"] });
+export const shipmentEventCreate = z.object({
+  status: z.enum(SHIPMENT_STATUSES),
+  location: z.string().trim().max(120).optional(),
+  note: z.string().trim().max(300).optional(),
+});

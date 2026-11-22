@@ -207,7 +207,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Pengiriman dan logistik",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       },
