@@ -987,3 +987,41 @@ model WebhookDelivery {
   @@index([status, nextAttemptAt])
   @@map("webhook_deliveries")
 }
+
+// ---------------------------------------------------------------- Pembiayaan dan mitra
+// Mitra (bank, koperasi, fintech, offtaker) dikelola operator platform. Platform hanya menghubungkan; keputusan ada di mitra.
+model FinancingPartner {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  name        String
+  kind        String
+  description String
+  minAmount   Decimal? @map("min_amount") @db.Decimal(16, 2)
+  maxAmount   Decimal? @map("max_amount") @db.Decimal(16, 2)
+  rateInfo    String?  @map("rate_info")
+  contactUrl  String?  @map("contact_url")
+  contactPhone String? @map("contact_phone")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("financing_partners")
+}
+
+model FinancingApplication {
+  id             String    @id @default(uuid(7)) @db.Uuid
+  organizationId String    @map("organization_id") @db.Uuid
+  partnerId      String    @map("partner_id") @db.Uuid
+  amount         Decimal   @db.Decimal(16, 2)
+  tenorMonths    Int       @map("tenor_months")
+  purpose        String
+  note           String?
+  snapshot       Json
+  status         String    @default("SUBMITTED")
+  partnerNote    String?   @map("partner_note")
+  createdBy      String    @map("created_by") @db.Uuid
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([organizationId, createdAt(sort: Desc)])
+  @@map("financing_applications")
+}

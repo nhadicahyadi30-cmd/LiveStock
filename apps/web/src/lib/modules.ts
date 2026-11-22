@@ -256,9 +256,9 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Akses pembiayaan dan mitra",
-        "status": "planned",
+        "status": "progress",
         "phase": 4,
-        "note": "Butuh mitra keuangan."
+        "note": "Mekanisme siap (pengajuan, ringkasan keuangan). Mitra ditambahkan operator."
       }
     ]
   },

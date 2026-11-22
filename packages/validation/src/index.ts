@@ -420,3 +420,32 @@ export const webhookCreate = z.object({
   events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).max(WEBHOOK_EVENTS.length),
 });
 export const webhookPatch = z.object({ active: z.boolean().optional(), events: z.array(z.enum(WEBHOOK_EVENTS)).min(1).optional() });
+
+// ---- Pembiayaan dan mitra (tahap 7) ----
+export const FINANCING_PURPOSES = ["MODAL_KERJA", "PAKAN", "KANDANG", "PERALATAN", "BIBIT", "LAINNYA"] as const;
+export const FINANCING_KINDS = ["BANK", "KOPERASI", "FINTECH", "OFFTAKER", "LAINNYA"] as const;
+export const financingApplicationCreate = z.object({
+  partnerId: uuid,
+  amount: z.number().positive().max(100_000_000_000),
+  tenorMonths: z.number().int().min(1).max(60),
+  purpose: z.enum(FINANCING_PURPOSES),
+  note: z.string().trim().max(500).optional(),
+});
+export const financingPartnerUpsert = z.object({
+  id: uuid.optional(),
+  name: z.string().trim().min(2).max(100),
+  kind: z.enum(FINANCING_KINDS),
+  description: z.string().trim().min(5).max(500),
+  minAmount: z.number().nonnegative().optional(),
+  maxAmount: z.number().positive().optional(),
+  rateInfo: z.string().trim().max(200).optional(),
+  contactUrl: z.string().trim().url().max(300).optional(),
+  contactPhone: z.string().trim().max(30).optional(),
+  active: z.boolean().default(true),
+});
+export const financingStatusUpdate = z.object({
+  organizationId: uuid,
+  applicationId: uuid,
+  status: z.enum(["IN_REVIEW", "APPROVED", "REJECTED"]),
+  partnerNote: z.string().trim().max(500).optional(),
+});

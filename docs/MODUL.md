@@ -71,7 +71,7 @@ Biaya, pendapatan, dan kelayakan usaha.
 - [~] HPP dan laba-rugi per batch (Tahap 4)
 - [~] Anggaran dan arus kas (Tahap 4)
 - [~] Invoice dan piutang (Tahap 4)
-- [ ] Akses pembiayaan dan mitra (Tahap 4): Butuh mitra keuangan.
+- [~] Akses pembiayaan dan mitra (Tahap 4): Butuh mitra keuangan.
 
 ## Smart Ternak (IoT)
 
@@ -107,3 +107,18 @@ curl -X POST http://localhost:3000/api/operator/billing/confirm `
 ```
 
 Paket berbayar yang sudah lewat masa aktif otomatis diperlakukan sebagai Gratis (data tidak dihapus).
+
+## Pembiayaan: mengelola mitra (operator)
+Mitra dan keputusan mereka dicatat operator lewat token `BILLING_OPERATOR_TOKEN`:
+
+```powershell
+# tambah mitra
+curl -X POST http://localhost:3000/api/operator/financing/partners `
+  -H "x-operator-token: <TOKEN>" -H "content-type: application/json" `
+  -d '{"name":"Koperasi Tani Makmur","kind":"KOPERASI","description":"Pinjaman modal kerja untuk peternak anggota.","minAmount":5000000,"maxAmount":100000000,"rateInfo":"Bunga mulai 1%/bulan, ketentuan mitra"}'
+
+# catat keputusan mitra atas pengajuan
+curl -X POST http://localhost:3000/api/operator/financing/applications `
+  -H "x-operator-token: <TOKEN>" -H "content-type: application/json" `
+  -d '{"organizationId":"<id>","applicationId":"<id>","status":"APPROVED","partnerNote":"Survei lokasi minggu depan"}'
+```
