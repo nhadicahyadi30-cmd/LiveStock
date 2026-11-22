@@ -1,6 +1,7 @@
 import { shipmentUpsert, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -30,5 +31,6 @@ export const PUT = tenantRoute<{ id: string }>({ permission: "market.manage" }, 
     await c.tx.marketShipmentEvent.create({ data: { shipmentId: sh.id, sellerOrgId: o.sellerOrgId, buyerOrgId: o.buyerOrgId, status: input.method === "AMBIL_SENDIRI" ? "DIKEMAS" : "DISERAHKAN_KURIR", note: "Pesanan dikirim", createdBy: c.userId } });
   }
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "market_shipment.upsert", entityType: "market_shipment", entityId: sh.id, after: { method: sh.method, courier: sh.courier } });
+  if (o.status === "ACCEPTED") await notifyOrg(c.tx, o.buyerOrgId, { kind: "market.shipment", title: `Pesananmu dikirim: ${o.listingTitle}`, body: input.trackingNumber ? `Resi ${input.trackingNumber}` : undefined, href: "/app/pasar" });
   return Response.json({ data: { id: sh.id } });
 });

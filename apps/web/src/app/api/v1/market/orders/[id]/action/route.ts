@@ -1,6 +1,7 @@
 import { marketOrderAction, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -47,5 +48,7 @@ export const POST = tenantRoute<{ id: string }>({ permission: "market.manage" },
   const upd = await c.tx.marketOrder.updateMany({ where: { id, status: o.status }, data: { status: next } });
   if (upd.count === 0) throw new ApiError(409, "CONFLICT", "Status pesanan baru saja berubah, muat ulang");
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: `market_order.${action.toLowerCase()}`, entityType: "market_order", entityId: id, before: { status: o.status }, after: { status: next } });
+  const LABEL = { ACCEPTED: "diterima penjual", REJECTED: "ditolak penjual", SHIPPED: "dikirim", COMPLETED: "diterima pembeli (selesai)", CANCELLED: "dibatalkan" } as const;
+  await notifyOrg(c.tx, isSeller ? o.buyerOrgId : o.sellerOrgId, { kind: "market.order_status", title: `Pesanan ${LABEL[next]}: ${o.listingTitle}`, href: "/app/pasar" });
   return Response.json({ data: { id, status: next } });
 });

@@ -1,6 +1,7 @@
 import { marketOrderCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -44,5 +45,6 @@ export const POST = tenantRoute({ permission: "market.manage" }, async (c) => {
     data: { listingId: listing.id, buyerOrgId: c.organizationId, sellerOrgId: listing.sellerOrgId, listingTitle: listing.title, unit: listing.unit, quantity: input.quantity, unitPrice: listing.priceIdr, total, buyerNote: input.note, createdBy: c.userId, clientId: input.clientId },
   });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "market_order.create", entityType: "market_order", entityId: order.id, after: { total, listing: listing.title } });
+  await notifyOrg(c.tx, listing.sellerOrgId, { kind: "market.order", title: `Pesanan baru: ${listing.title}`, body: `${input.quantity} ${listing.unit}, total Rp ${Math.round(total).toLocaleString("id-ID")}`, href: "/app/pasar" });
   return Response.json({ data: { id: order.id, total } }, { status: 201 });
 });

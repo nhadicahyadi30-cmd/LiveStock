@@ -2,6 +2,8 @@ import { hashPassword, prisma, withTenant } from "@sl/database";
 import { randomUUID, randomBytes } from "node:crypto";
 import { z } from "zod";
 import { setSessionCookie } from "@/server/cookies";
+import { clientIp } from "@/server/audit";
+import { limitOrThrow } from "@/server/rate-limit";
 import { ApiError, apiRoute } from "@/server/errors";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +19,7 @@ const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0
 // POST /api/v1/auth/register -> membuat akun + organisasi baru (pendaftar menjadi OWNER) lalu masuk.
 export function POST(req: Request): Promise<Response> {
   return apiRoute(req, async () => {
+    limitOrThrow(`register:ip:${clientIp(req) ?? "unknown"}`, 10, 60 * 60_000, "pendaftaran");
     const input = body.parse(await req.json());
     if (await prisma.user.findUnique({ where: { email: input.email }, select: { id: true } })) {
       throw new ApiError(409, "EMAIL_TAKEN", "Email ini sudah terdaftar. Silakan masuk.");

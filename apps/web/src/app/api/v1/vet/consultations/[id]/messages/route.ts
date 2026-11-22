@@ -1,6 +1,7 @@
 import { uuid, vetMessageCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -16,5 +17,6 @@ export const POST = tenantRoute<{ id: string }>({ permission: "records.create" }
   await c.tx.vetMessage.create({ data: { consultationId: id, farmOrgId: r.farmOrgId, vetOrgId: r.vetOrgId, authorOrgId: c.organizationId, authorUserId: c.userId, body } });
   await c.tx.vetConsultation.update({ where: { id }, data: { status: isVet ? "ANSWERED" : "OPEN" } });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "vet_message.create", entityType: "vet_consultation", entityId: id });
+  await notifyOrg(c.tx, isVet ? r.farmOrgId : r.vetOrgId, { kind: "vet.message", title: `Balasan konsultasi: ${r.subject}`, href: "/app/dokter" });
   return Response.json({ data: { id } }, { status: 201 });
 });

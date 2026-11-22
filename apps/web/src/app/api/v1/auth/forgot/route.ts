@@ -1,6 +1,8 @@
 import { prisma } from "@sl/database";
 import { z } from "zod";
 import { newToken, RESET_TTL_MS, sendMail } from "@/server/auth-token";
+import { clientIp } from "@/server/audit";
+import { limitOrThrow } from "@/server/rate-limit";
 import { apiRoute } from "@/server/errors";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +13,7 @@ const body = z.object({ email: z.string().trim().toLowerCase().email().max(254) 
 // Di luar produksi, tautan ikut dikembalikan supaya bisa dites tanpa layanan email.
 export function POST(req: Request): Promise<Response> {
   return apiRoute(req, async () => {
+    limitOrThrow(`forgot:ip:${clientIp(req) ?? "unknown"}`, 5, 60 * 60_000, "lupa sandi");
     const { email } = body.parse(await req.json());
     let devLink: string | undefined;
     const user = await prisma.user.findUnique({ where: { email }, select: { id: true, isActive: true } });

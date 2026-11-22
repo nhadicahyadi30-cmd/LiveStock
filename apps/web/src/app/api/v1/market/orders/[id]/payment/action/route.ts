@@ -1,6 +1,7 @@
 import { paymentAction, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -40,5 +41,6 @@ export const POST = tenantRoute<{ id: string }>({ permission: "market.manage" },
     }
   }
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: `market_payment.${action.toLowerCase()}`, entityType: "market_payment", entityId: p.id, before: { status: p.status }, after: { status: data.status as string } });
+  await notifyOrg(c.tx, isSeller ? p.buyerOrgId : p.sellerOrgId, { kind: "market.payment", title: action === "CONFIRM_RECEIVED" ? "Penjual mengonfirmasi pembayaranmu" : action === "DISPUTE" ? "Pembeli mengajukan sengketa pembayaran" : "Dana dikembalikan, pesanan dibatalkan", href: "/app/pasar" });
   return Response.json({ data: { id: p.id, status: data.status } });
 });

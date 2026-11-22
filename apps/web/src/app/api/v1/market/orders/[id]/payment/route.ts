@@ -1,6 +1,7 @@
 import { paymentUpsert, uuid } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -33,5 +34,6 @@ export const PUT = tenantRoute<{ id: string }>({ permission: "market.manage" }, 
   const data = { method: input.method, reference: input.reference ?? null, amount, status: submitted ? "PROOF_SUBMITTED" : "AWAITING", submittedAt: submitted ? new Date() : null };
   const p = await c.tx.marketPayment.upsert({ where: { orderId }, update: data, create: { ...data, orderId, buyerOrgId: o.buyerOrgId, sellerOrgId: o.sellerOrgId } });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "market_payment.submit", entityType: "market_payment", entityId: p.id, after: { method: p.method, amount } });
+  await notifyOrg(c.tx, o.sellerOrgId, { kind: "market.payment", title: submitted ? `Pembeli mengaku sudah membayar: ${o.listingTitle}` : `Pembeli memilih bayar di tempat: ${o.listingTitle}`, body: "Cek dana lalu konfirmasi di menu Pasar.", href: "/app/pasar" });
   return Response.json({ data: view(p) });
 });

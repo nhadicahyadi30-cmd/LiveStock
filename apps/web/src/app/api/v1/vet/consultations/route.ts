@@ -1,6 +1,7 @@
 import { vetConsultationCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
+import { notifyOrg } from "@/server/notify";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
@@ -24,5 +25,6 @@ export const POST = tenantRoute({ permission: "records.create" }, async (c) => {
   const row = await c.tx.vetConsultation.create({ data: { farmOrgId: c.organizationId, vetOrgId: vet.orgId, farmName: farm?.name ?? "Peternakan", subject: input.subject, species: input.species, symptoms: input.symptoms, createdBy: c.userId } });
   await c.tx.vetMessage.create({ data: { consultationId: row.id, farmOrgId: c.organizationId, vetOrgId: vet.orgId, authorOrgId: c.organizationId, authorUserId: c.userId, body: input.symptoms } });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "vet_consultation.create", entityType: "vet_consultation", entityId: row.id, after: { vetOrgId: vet.orgId } });
+  await notifyOrg(c.tx, vet.orgId, { kind: "vet.consultation", title: `Konsultasi baru: ${input.subject}`, body: input.species, href: "/app/dokter" });
   return Response.json({ data: { id: row.id } }, { status: 201 });
 });
