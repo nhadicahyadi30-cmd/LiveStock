@@ -59,5 +59,5 @@ Lihat contoh di halaman perangkat (tab ESP32). Gunakan HTTPS bila aplikasi dipas
 - Hanya hash SHA-256 token yang disimpan; token tidak bisa dilihat ulang.
 - Perangkat hanya bisa menulis data ke perangkatnya sendiri. Perangkat nonaktif ditolak (`403`).
 - Batas laju disimpan di memori proses. Untuk lebih dari satu instans server, pindahkan ke Redis.
-- Data sensor menumpuk cepat (30 detik sekali = ±2.900 baris per metrik per hari). Rencanakan retensi/rollup (mis. hapus data mentah > 90 hari) sebelum dipakai skala besar.
+- Data sensor menumpuk cepat (30 detik sekali = ±2.900 baris per metrik per hari). Data mentah > 90 hari dihapus otomatis (sekitar 1 dari 100 kiriman perangkat memicu pembersihan, maks. 5000 baris sekali jalan). Rollup/agregasi per jam belum ada; tambahkan bila perlu riwayat lebih panjang.
 - Belum ada: MQTT langsung, video langsung, dan penjadwalan otomatis perintah. Semuanya rencana lanjutan.

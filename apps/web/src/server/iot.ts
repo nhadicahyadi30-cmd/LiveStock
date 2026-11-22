@@ -63,6 +63,18 @@ export function normalizePayload(body: unknown): { metric: string; value: number
   return readingsPayload.parse({ readings: flat.map(([metric, value]) => ({ metric: metricName.parse(metric), value, ts })) }).readings;
 }
 
+/** Data mentah sensor disimpan 90 hari; yang lebih lama dihapus agar tabel tidak membengkak. */
+export const READING_RETENTION_DAYS = 90;
+
+/** Hapus pembacaan lama milik satu perangkat, maksimal 5000 baris per panggilan agar ringan. */
+export async function pruneReadings(tx: Tx, deviceId: string, now = Date.now()): Promise<number> {
+  const cutoff = new Date(now - READING_RETENTION_DAYS * 864e5);
+  const old = await tx.sensorReading.findMany({ where: { deviceId, recordedAt: { lt: cutoff } }, select: { id: true }, take: 5000 });
+  if (old.length === 0) return 0;
+  const r = await tx.sensorReading.deleteMany({ where: { id: { in: old.map((o) => o.id) } } });
+  return r.count;
+}
+
 export interface IngestResult { accepted: number; rejected: number; alerts: number }
 
 /** Menyimpan pembacaan, memperbarui "terakhir terlihat", dan mengevaluasi aturan alarm. */
@@ -75,6 +87,8 @@ export async function ingest(dev: DeviceAuth, items: ReturnType<typeof normalize
   const alerts = await withTenant({ organizationId: dev.organizationId, userId: dev.createdBy }, async (tx) => {
     if (rows.length > 0) await tx.sensorReading.createMany({ data: rows.map((r) => ({ ...r, organizationId: dev.organizationId, deviceId: dev.id })) });
     await tx.device.update({ where: { id: dev.id }, data: { lastSeenAt: new Date(now) } });
+    // Sekitar 1 dari 100 kiriman ikut membersihkan data lama (tanpa cron).
+    if (Math.random() < 0.01) await pruneReadings(tx, dev.id, now);
     return rows.length > 0 ? evaluateRules(tx, dev, rows) : 0;
   });
   return { accepted: rows.length, rejected, alerts };
