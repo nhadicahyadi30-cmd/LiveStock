@@ -16,6 +16,7 @@
     "rls": "node scripts/with-env.mjs tsx scripts/apply-sql.ts",
     "seed": "node scripts/with-env.mjs tsx prisma/seed.ts",
     "seed:demo": "node scripts/with-env.mjs tsx prisma/seed-demo.ts",
+    "seed:photos": "node scripts/with-env.mjs tsx prisma/seed-photos.ts",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/with-env.mjs vitest run"
   },

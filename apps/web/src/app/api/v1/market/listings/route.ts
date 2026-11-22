@@ -1,21 +1,25 @@
 import { listingCategories, listingCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
+import { imageIdsFor } from "@/server/listing-images";
 import { ApiError } from "@/server/errors";
 import { tenantRoute } from "@/server/tenant-guard";
 
 export const dynamic = "force-dynamic";
 
-// GET /api/v1/market/listings?scope=browse|mine&category=&q=
-//  browse: listing terbit milik orang lain; mine: semua listing organisasi sendiri.
+// GET /api/v1/market/listings?scope=all|browse|mine&category=&q=
+//  all: semua produk yang tayang (termasuk milik sendiri, ditandai isMine); browse: tayang milik orang lain;
+//  mine: semua listing organisasi sendiri (termasuk draf).
 export const GET = tenantRoute({ permission: "market.read" }, async (c) => {
   const url = new URL(c.req.url);
-  const mine = url.searchParams.get("scope") === "mine";
+  const scope = url.searchParams.get("scope");
+  const mine = scope === "mine";
+  const all = scope === "all";
   const category = listingCategories.find((k) => k === url.searchParams.get("category"));
   const q = (url.searchParams.get("q") ?? "").trim().slice(0, 80);
 
   const rows = await c.tx.marketListing.findMany({
     where: {
-      ...(mine ? { sellerOrgId: c.organizationId } : { status: "PUBLISHED", sellerOrgId: { not: c.organizationId }, stock: { gt: 0 } }),
+      ...(mine ? { sellerOrgId: c.organizationId } : all ? { status: "PUBLISHED" as const, stock: { gt: 0 } } : { status: "PUBLISHED" as const, sellerOrgId: { not: c.organizationId }, stock: { gt: 0 } }),
       ...(category ? { category } : {}),
       ...(q ? { title: { contains: q, mode: "insensitive" as const } } : {}),
     },
@@ -23,7 +27,8 @@ export const GET = tenantRoute({ permission: "market.read" }, async (c) => {
     take: 100,
   });
   const sellerIds = [...new Set(rows.map((r) => r.sellerOrgId))];
-  const [profiles, ratings] = await Promise.all([
+  const [images, profiles, ratings] = await Promise.all([
+    imageIdsFor(c.tx, rows.map((r) => r.id)),
     c.tx.vendorProfile.findMany({ where: { orgId: { in: sellerIds } } }),
     c.tx.marketReview.groupBy({ by: ["sellerOrgId"], where: { sellerOrgId: { in: sellerIds } }, _avg: { rating: true }, _count: { rating: true } }),
   ]);
@@ -31,7 +36,7 @@ export const GET = tenantRoute({ permission: "market.read" }, async (c) => {
   const rate = new Map(ratings.map((r) => [r.sellerOrgId, { avg: r._avg.rating ?? 0, count: r._count.rating }]));
   return Response.json({
     data: rows.map((r) => ({
-      id: r.id, title: r.title, category: r.category, description: r.description, unit: r.unit, status: r.status,
+      id: r.id, sellerOrgId: r.sellerOrgId, isMine: r.sellerOrgId === c.organizationId, images: images.get(r.id) ?? [], title: r.title, category: r.category, description: r.description, unit: r.unit, status: r.status,
       priceIdr: Number(r.priceIdr), stock: Number(r.stock), createdAt: r.createdAt,
       seller: { name: prof.get(r.sellerOrgId)?.displayName ?? "Penjual", city: prof.get(r.sellerOrgId)?.city ?? "", phone: prof.get(r.sellerOrgId)?.phone ?? "", rating: rate.get(r.sellerOrgId) ?? { avg: 0, count: 0 } },
     })),

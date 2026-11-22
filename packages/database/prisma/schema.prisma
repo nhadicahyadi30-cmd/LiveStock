@@ -1040,3 +1040,19 @@ model CameraSnapshot {
   @@index([organizationId, capturedAt(sort: Desc)])
   @@map("camera_snapshots")
 }
+
+/// Foto produk marketplace (maks. 4 per produk, disimpan di database seperti foto kamera).
+model MarketListingImage {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  listingId   String   @map("listing_id") @db.Uuid
+  sellerOrgId String   @map("seller_org_id") @db.Uuid
+  contentType String   @map("content_type")
+  sizeBytes   Int      @map("size_bytes")
+  position    Int      @default(0)
+  data        Bytes
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([listingId, position])
+  @@index([sellerOrgId])
+  @@map("market_listing_images")
+}

@@ -52,7 +52,7 @@ Membuat 9 akun dan 5 organisasi (sapi/kambing, ayam, ikan, toko pakan, dokter he
 pakan, produksi, kesehatan terjadwal, keuangan, IoT + alarm, kamera, pesanan marketplace (berbagai status),
 konsultasi dokter, pembiayaan, langganan, kunci API, dan webhook. Kata sandi semua akun `demo12345`
 (`budi@demo.test`, `ani@demo.test`, `dedi@demo.test`, `toko@demo.test`, `rina@demo.test`, dll.).
-Skrip berhenti bila datanya sudah ada; untuk mengulang dari nol jalankan `pnpm db:push --force-reset`, `pnpm db:setup`, lalu `pnpm db:seed:demo`.
+Foto contoh produk marketplace: `pnpm db:seed:photos` (aman diulang). Skrip berhenti bila datanya sudah ada; untuk mengulang dari nol jalankan `pnpm db:push --force-reset`, `pnpm db:setup`, lalu `pnpm db:seed:demo`.
 
 
 Mencoba API dengan sesi pengembangan (hanya aktif bila `ENABLE_DEV_SESSION=true` dan bukan production):

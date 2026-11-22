@@ -19,6 +19,7 @@
     "db:rls": "pnpm --filter @sl/database rls",
     "db:seed": "pnpm --filter @sl/database seed",
     "db:seed:demo": "pnpm --filter @sl/database seed:demo",
+    "db:seed:photos": "pnpm --filter @sl/database seed:photos",
     "db:setup": "pnpm db:generate && pnpm db:push && pnpm db:rls && pnpm db:seed"
   },
   "devDependencies": {

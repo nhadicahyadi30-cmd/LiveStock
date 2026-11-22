@@ -4,9 +4,10 @@ import { useMe } from "@/components/app-shell";
 import { Empty, Modal, Skeleton, fmt, fmtDate, useToast } from "@/components/ui";
 import { PaymentModal } from "@/components/payment-panel";
 import { ShipmentModal } from "@/components/shipment-panel";
+import { PhotoManager, Photo, ProductModal, SellerModal, uploadListingPhoto, MAX_PHOTOS, type ProductDetail } from "@/components/market-parts";
 import { api, ApiFailure } from "@/lib/api";
 
-interface Listing { id: string; title: string; category: string; description: string | null; unit: string; status: string; priceIdr: number; stock: number; seller: { name: string; city: string; phone: string; rating: { avg: number; count: number } } }
+interface Listing { id: string; sellerOrgId: string; isMine: boolean; images: string[]; title: string; category: string; description: string | null; unit: string; status: string; priceIdr: number; stock: number; seller: { name: string; city: string; phone: string; rating: { avg: number; count: number } } }
 interface Order { id: string; listingTitle: string; unit: string; status: string; buyerNote: string | null; createdAt: string; quantity: number; unitPrice: number; total: number; reviewed: boolean; counterparty: { name: string; phone: string | null } }
 interface Profile { displayName: string; city: string; phone: string; about: string | null }
 type Tab = "browse" | "shop" | "buy" | "sell";
@@ -29,14 +30,14 @@ export default function PasarPage() {
   const [buy, setBuy] = useState<Order[]>([]);
   const [sell, setSell] = useState<Order[]>([]);
   const [profile, setProfile] = useState<Profile | null | undefined>(undefined);
-  const [modal, setModal] = useState<null | "profile" | "listing" | { order: Listing } | { review: Order } | { ship: Order; seller: boolean } | { pay: Order }>(null);
+  const [modal, setModal] = useState<null | "profile" | "listing" | { photos: Listing } | { product: Listing } | { seller: string } | { order: Listing } | { review: Order } | { ship: Order; seller: boolean } | { pay: Order }>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const allowed = role === "OWNER" || role === "MANAGER";
 
   const load = useCallback(() => {
     if (!allowed) return;
-    api<{ data: Listing[] }>(`/market/listings?scope=browse${cat ? `&category=${cat}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`).then((r) => setListings(r.data)).catch(() => setListings([]));
+    api<{ data: Listing[] }>(`/market/listings?scope=all${cat ? `&category=${cat}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`).then((r) => setListings(r.data)).catch(() => setListings([]));
     api<{ data: Listing[] }>("/market/listings?scope=mine").then((r) => setMine(r.data)).catch(() => undefined);
     api<{ data: Order[] }>("/market/orders?role=buy").then((r) => setBuy(r.data)).catch(() => undefined);
     api<{ data: Order[] }>("/market/orders?role=sell").then((r) => setSell(r.data)).catch(() => undefined);
@@ -56,11 +57,15 @@ export default function PasarPage() {
   const num = (f: FormData, k: string) => Number(f.get(k));
 
   const saveProfile = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(() => api("/market/profile", { method: "PUT", body: { displayName: f.get("displayName"), city: f.get("city"), phone: f.get("phone"), about: String(f.get("about") ?? "").trim() || undefined } }), "Profil toko disimpan"); };
-  const saveListing = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(() => api("/market/listings", { body: { title: f.get("title"), category: f.get("category"), description: String(f.get("description") ?? "").trim() || undefined, priceIdr: num(f, "price"), unit: f.get("unit"), stock: num(f, "stock"), status: f.get("publish") ? "PUBLISHED" : "DRAFT" } }), "Produk ditambahkan"); };
+  const saveListing = (e: FormEvent<HTMLFormElement>) => { e.preventDefault(); const f = new FormData(e.currentTarget); const photos = (f.getAll("photos") as File[]).filter((x) => x.size > 0).slice(0, MAX_PHOTOS);
+    void run(async () => {
+      const r = await api<{ data: { id: string } }>("/market/listings", { body: { title: f.get("title"), category: f.get("category"), description: String(f.get("description") ?? "").trim() || undefined, priceIdr: num(f, "price"), unit: f.get("unit"), stock: num(f, "stock"), status: f.get("publish") ? "PUBLISHED" : "DRAFT" } });
+      for (const ph of photos) { try { await uploadListingPhoto(r.data.id, ph); } catch (x) { toast({ kind: "err", title: x instanceof Error ? `Produk tersimpan, tetapi foto gagal: ${x.message}` : "Foto gagal diunggah" }); break; } }
+    }, "Produk ditambahkan"); };
   const placeOrder = (e: FormEvent<HTMLFormElement>, l: Listing) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(() => api("/market/orders", { body: { listingId: l.id, quantity: num(f, "qty"), note: String(f.get("note") ?? "").trim() || undefined, clientId: crypto.randomUUID() } }), "Pesanan terkirim ke penjual").then(() => setTab("buy")); };
   const review = (e: FormEvent<HTMLFormElement>, o: Order) => { e.preventDefault(); const f = new FormData(e.currentTarget); void run(() => api("/market/reviews", { body: { orderId: o.id, rating: num(f, "rating"), comment: String(f.get("comment") ?? "").trim() || undefined } }), "Terima kasih atas ulasanmu"); };
 
-  const TABS: [Tab, string][] = [["browse", "Jelajah"], ["buy", `Pesanan saya${buy.filter((o) => o.status === "SHIPPED").length ? " •" : ""}`], ["sell", `Pesanan masuk${sell.filter((o) => o.status === "PENDING").length ? ` (${sell.filter((o) => o.status === "PENDING").length})` : ""}`], ["shop", "Toko saya"]];
+  const TABS: [Tab, string][] = [["browse", "Semua produk"], ["buy", `Pesanan saya${buy.filter((o) => o.status === "SHIPPED").length ? " •" : ""}`], ["sell", `Pesanan masuk${sell.filter((o) => o.status === "PENDING").length ? ` (${sell.filter((o) => o.status === "PENDING").length})` : ""}`], ["shop", "Toko saya"]];
   const OrderRow = ({ o, seller }: { o: Order; seller: boolean }) => (
     <div className="row" style={{ gap: 12, padding: "12px 16px", borderBottom: "1px solid var(--line, #e5e7eb)", alignItems: "flex-start" }}>
       <div style={{ flex: 1 }}>
@@ -93,12 +98,13 @@ export default function PasarPage() {
         {listings === null ? <Skeleton h={160} /> : listings.length === 0 ? <Empty icon="cart" title="Belum ada produk" text="Belum ada penjual yang memasang produk di kategori ini." /> : (
           <div className="grid g3">{listings.map((l) => (
             <div className="card card-pad" key={l.id}>
-              <span className="badge">{CAT[l.category]}</span>
-              <h3 className="mt-1">{l.title}</h3>
+              <button type="button" onClick={() => setModal({ product: l })} aria-label={`Lihat ${l.title}`} style={{ display: "block", width: "100%", padding: 0, border: 0, background: "none", cursor: "pointer" }}><Photo id={l.images[0]} alt={l.title} /></button>
+              <div className="row mt-1" style={{ gap: 6 }}><span className="badge">{CAT[l.category]}</span>{l.isMine && <span className="badge">Produkmu</span>}</div>
+              <h3 className="mt-1" style={{ cursor: "pointer" }} onClick={() => setModal({ product: l })}>{l.title}</h3>
               <div style={{ fontSize: 20, fontWeight: 700 }}>{rp(l.priceIdr)} <span className="muted sm">/ {l.unit}</span></div>
-              <div className="xs muted">Stok {fmt(l.stock)} {l.unit} · {l.seller.name}{l.seller.city ? `, ${l.seller.city}` : ""}{l.seller.rating.count ? ` · ★ ${l.seller.rating.avg.toFixed(1)} (${l.seller.rating.count})` : ""}</div>
-              {l.description && <p className="sm mt-1">{l.description}</p>}
-              <button className="btn btn-primary btn-sm mt-2" onClick={() => { setErr(null); setModal({ order: l }); }}>Pesan</button>
+              <div className="xs muted">Stok {fmt(l.stock)} {l.unit} · <button type="button" onClick={() => setModal({ seller: l.sellerOrgId })} style={{ background: "none", border: 0, padding: 0, color: "inherit", textDecoration: "underline", cursor: "pointer", font: "inherit" }}>{l.seller.name}</button>{l.seller.city ? `, ${l.seller.city}` : ""}{l.seller.rating.count ? ` · ★ ${l.seller.rating.avg.toFixed(1)} (${l.seller.rating.count})` : ""}</div>
+              {l.description && <p className="sm mt-1" style={{ display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{l.description}</p>}
+              <div className="row mt-2" style={{ gap: 6 }}><button className="btn btn-secondary btn-sm" onClick={() => setModal({ product: l })}>Detail</button>{!l.isMine && <button className="btn btn-primary btn-sm" onClick={() => { setErr(null); setModal({ order: l }); }}>Pesan</button>}</div>
             </div>))}</div>)}
       </div>)}
 
@@ -112,8 +118,8 @@ export default function PasarPage() {
         </div>
         {profile && (<><div className="page-h mt-3"><div><h2 style={{ fontSize: 18 }}>Produk saya</h2></div><button className="btn btn-primary" onClick={() => { setErr(null); setModal("listing"); }}>Tambah produk</button></div>
           {mine.length === 0 ? <Empty icon="cart" title="Belum ada produk" /> : <div className="card table-wrap"><table className="table"><thead><tr><th>Produk</th><th className="num">Harga</th><th className="num">Stok</th><th>Status</th><th /></tr></thead><tbody>
-            {mine.map((l) => (<tr key={l.id}><td>{l.title}<div className="xs muted">{CAT[l.category]}</div></td><td className="num">{rp(l.priceIdr)} / {l.unit}</td><td className="num">{fmt(l.stock)}</td><td>{l.status === "PUBLISHED" ? "Tayang" : l.status === "DRAFT" ? "Draf" : "Diarsipkan"}</td>
-              <td className="tr"><button className="btn btn-ghost btn-sm" onClick={() => void run(() => api(`/market/listings/${l.id}`, { method: "PATCH", body: { status: l.status === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED" } }), l.status === "PUBLISHED" ? "Produk diturunkan" : "Produk ditayangkan", false)}>{l.status === "PUBLISHED" ? "Turunkan" : "Tayangkan"}</button>
+            {mine.map((l) => (<tr key={l.id}><td><div className="row" style={{ gap: 10, alignItems: "center" }}><div style={{ width: 52, flex: "none" }}><Photo id={l.images[0]} alt="" ratio="1 / 1" radius={8} /></div><div>{l.title}<div className="xs muted">{CAT[l.category]} · {l.images.length} foto</div></div></div></td><td className="num">{rp(l.priceIdr)} / {l.unit}</td><td className="num">{fmt(l.stock)}</td><td>{l.status === "PUBLISHED" ? "Tayang" : l.status === "DRAFT" ? "Draf" : "Diarsipkan"}</td>
+              <td className="tr"><button className="btn btn-ghost btn-sm" onClick={() => setModal({ photos: l })}>Foto</button><button className="btn btn-ghost btn-sm" onClick={() => void run(() => api(`/market/listings/${l.id}`, { method: "PATCH", body: { status: l.status === "PUBLISHED" ? "ARCHIVED" : "PUBLISHED" } }), l.status === "PUBLISHED" ? "Produk diturunkan" : "Produk ditayangkan", false)}>{l.status === "PUBLISHED" ? "Turunkan" : "Tayangkan"}</button>
                 <button className="btn btn-ghost btn-sm" onClick={() => { const v = window.prompt("Stok baru:", String(l.stock)); if (v !== null && v.trim() !== "" && Number(v) >= 0) void run(() => api(`/market/listings/${l.id}`, { method: "PATCH", body: { stock: Number(v) } }), "Stok diperbarui", false); }}>Ubah stok</button></td></tr>))}</tbody></table></div>}</>)}
       </div>)}
 
@@ -128,6 +134,7 @@ export default function PasarPage() {
         <div className="grid g2"><div className="field"><label htmlFor="category">Kategori</label><select id="category" name="category" className="input" defaultValue="LIVESTOCK">{Object.entries(CAT).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select></div><div className="field"><label htmlFor="unit">Satuan</label><select id="unit" name="unit" className="input" defaultValue="ekor">{UNITS.map((u) => <option key={u}>{u}</option>)}</select></div></div>
         <div className="grid g2"><div className="field"><label htmlFor="price">Harga per satuan (Rp)</label><input id="price" name="price" type="number" min="0" inputMode="numeric" className="input" required /></div><div className="field"><label htmlFor="stock">Stok</label><input id="stock" name="stock" type="number" min="0" step="0.001" inputMode="decimal" className="input" required /></div></div>
         <div className="field"><label htmlFor="description">Deskripsi</label><input id="description" name="description" className="input" maxLength={1000} placeholder="opsional" /></div>
+        <div className="field"><label htmlFor="photos">Foto produk (maks. {MAX_PHOTOS}, opsional)</label><input id="photos" name="photos" type="file" accept="image/jpeg,image/png,image/webp" multiple className="input" /></div>
         <label className="row" style={{ gap: 8 }}><input type="checkbox" name="publish" defaultChecked /> Tayangkan sekarang</label>
         {err && <div className="alert err">{err}</div>}<button className="btn btn-primary btn-block" disabled={busy}>{busy ? "Menyimpan…" : "Simpan produk"}</button></form></Modal>)}
 
@@ -137,6 +144,9 @@ export default function PasarPage() {
         <div className="field"><label htmlFor="note">Catatan untuk penjual</label><input id="note" name="note" className="input" maxLength={500} placeholder="opsional" /></div>
         {err && <div className="alert err">{err}</div>}<button className="btn btn-primary btn-block" disabled={busy}>{busy ? "Mengirim…" : "Kirim pesanan"}</button></form></Modal>)}
 
+      {modal && typeof modal === "object" && "photos" in modal && <PhotoManager listing={modal.photos} onClose={() => setModal(null)} onChanged={load} />}
+      {modal && typeof modal === "object" && "seller" in modal && <SellerModal orgId={modal.seller} onClose={() => setModal(null)} onProduct={(id) => { const l = listings?.find((x) => x.id === id); if (l) setModal({ product: l }); }} />}
+      {modal && typeof modal === "object" && "product" in modal && <ProductModal p={modal.product as ProductDetail} onClose={() => setModal(null)} onOrder={() => { setErr(null); setModal({ order: (modal as { product: Listing }).product }); }} onSeller={() => setModal({ seller: (modal as { product: Listing }).product.sellerOrgId })} />}
       {modal && typeof modal === "object" && "pay" in modal && <PaymentModal orderId={modal.pay.id} title={modal.pay.listingTitle} onClose={() => setModal(null)} onChanged={load} />}
       {modal && typeof modal === "object" && "ship" in modal && <ShipmentModal orderId={modal.ship.id} title={modal.ship.listingTitle} status={modal.ship.status} seller={modal.seller} onClose={() => setModal(null)} onChanged={load} />}
       {modal && typeof modal === "object" && "review" in modal && (<Modal title="Beri ulasan" onClose={() => setModal(null)}><form onSubmit={(e) => review(e, (modal as { review: Order }).review)} className="stack">

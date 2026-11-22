@@ -11,9 +11,16 @@ if (!url) {
 }
 
 const dir = join(dirname(fileURLToPath(import.meta.url)), "..", "prisma", "sql");
+// Argumen opsional: awalan nama berkas, mis. "pnpm db:rls 018" hanya menjalankan 018_*.sql.
+// Berguna di database yang sudah berisi data (berkas lama memvalidasi ulang constraint dan bisa gagal karena RLS).
+const only = process.argv[2];
 const files = readdirSync(dir)
-  .filter((f) => f.endsWith(".sql"))
+  .filter((f) => f.endsWith(".sql") && (!only || f.startsWith(only)))
   .sort();
+if (files.length === 0) {
+  console.error(`Tidak ada berkas SQL yang cocok dengan "${only ?? ""}".`);
+  process.exit(1);
+}
 
 const client = new pg.Client({ connectionString: url });
 await client.connect();
