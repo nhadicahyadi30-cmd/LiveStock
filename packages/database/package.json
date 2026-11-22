@@ -15,6 +15,7 @@
     "migrate": "node scripts/with-env.mjs prisma migrate dev",
     "rls": "node scripts/with-env.mjs tsx scripts/apply-sql.ts",
     "seed": "node scripts/with-env.mjs tsx prisma/seed.ts",
+    "seed:demo": "node scripts/with-env.mjs tsx prisma/seed-demo.ts",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/with-env.mjs vitest run"
   },

@@ -42,6 +42,19 @@ Antarmuka: buka http://localhost:3000, masuk dengan akun demo (`demo@example.tes
 `SEED_DEMO=true pnpm db:seed`). Isi `SESSION_SECRET` di `.env.local` (minimal 32 karakter, `openssl rand -base64 48`).
 Halaman publik: `/` (beranda), `/produk`, `/layanan`, `/tentang`, dan `/login`. Aplikasi di `/app`: Dashboard, Catat (bobot dan kematian, dengan antrean offline), Ternak (tabel batch dan individual, detail batch), dan Peta modul. Tersedia mode gelap dan tampilan HP.
 
+### Data dummy lengkap (banyak pengguna, semua fitur)
+
+```bash
+pnpm db:seed:demo
+```
+
+Membuat 9 akun dan 5 organisasi (sapi/kambing, ayam, ikan, toko pakan, dokter hewan) lengkap dengan ternak, bobot,
+pakan, produksi, kesehatan terjadwal, keuangan, IoT + alarm, kamera, pesanan marketplace (berbagai status),
+konsultasi dokter, pembiayaan, langganan, kunci API, dan webhook. Kata sandi semua akun `demo12345`
+(`budi@demo.test`, `ani@demo.test`, `dedi@demo.test`, `toko@demo.test`, `rina@demo.test`, dll.).
+Skrip berhenti bila datanya sudah ada; untuk mengulang dari nol jalankan `pnpm db:push --force-reset`, `pnpm db:setup`, lalu `pnpm db:seed:demo`.
+
+
 Mencoba API dengan sesi pengembangan (hanya aktif bila `ENABLE_DEV_SESSION=true` dan bukan production):
 
 ```bash
