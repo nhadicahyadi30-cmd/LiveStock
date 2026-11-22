@@ -93,7 +93,7 @@ Prediksi dan rekomendasi dari data peternakan.
 - [~] Deteksi dini penyakit dan anomali (Tahap 6)
 - [~] Rekomendasi pakan dan FCR (Tahap 6)
 - [~] Prediksi harga pasar (Tahap 7)
-- [ ] Asisten tanya-jawab peternakan (Tahap 6)
+- [~] Asisten tanya-jawab peternakan (pencocokan kata kunci, bukan model bahasa) (Tahap 6)
 
 Keterangan: `[x]` tersedia, `[~]` sebagian, `[ ]` direncanakan.
 

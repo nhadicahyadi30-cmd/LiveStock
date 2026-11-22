@@ -342,7 +342,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Asisten tanya-jawab peternakan",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
         "note": ""
       }

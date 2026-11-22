@@ -36,6 +36,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     { href: "/app/iot", label: "IoT (sensor kandang)", icon: "cpu" },
     { href: "/app/kamera", label: "Kamera kandang", icon: "search" },
     { href: "/app/ai", label: "AI (prediksi)", icon: "spark" },
+    { href: "/app/asisten", label: "Asisten tanya-jawab", icon: "info" },
   ] },
   { group: "Platform", items: [
     { href: "/app/laporan", label: "Laporan", icon: "download" },
