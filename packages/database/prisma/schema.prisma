@@ -791,3 +791,21 @@ model DeviceCommand {
   @@index([deviceId, status])
   @@map("device_commands")
 }
+
+// Harga pasar yang dicatat organisasi sendiri (hasil survei pasar, pengepul, atau tawaran pembeli).
+model MarketPrice {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  commodity      String
+  unit           String
+  price          Decimal  @db.Decimal(16, 2)
+  region         String?
+  source         String?
+  observedOn     DateTime @map("observed_on") @db.Date
+  recordedBy     String   @map("recorded_by") @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  voidedAt       DateTime? @map("voided_at") @db.Timestamptz(6)
+
+  @@index([organizationId, commodity, observedOn(sort: Desc)])
+  @@map("market_prices")
+}

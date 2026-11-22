@@ -61,7 +61,7 @@ Jual beli ternak, pakan, dan sarana multi-vendor.
 - [ ] Pembayaran dan rekening bersama (escrow) (Tahap 3): Butuh keputusan penyedia pembayaran.
 - [ ] Pengiriman dan logistik (Tahap 3)
 - [~] Ulasan dan reputasi (Tahap 3)
-- [ ] Harga pasar (Tahap 3)
+- [~] Harga pasar (Tahap 7)
 
 ## Keuangan
 
@@ -92,7 +92,7 @@ Prediksi dan rekomendasi dari data peternakan.
 - [~] Prediksi bobot dan waktu panen (Tahap 6): Butuh data riil beberapa siklus.
 - [~] Deteksi dini penyakit dan anomali (Tahap 6)
 - [~] Rekomendasi pakan dan FCR (Tahap 6)
-- [ ] Prediksi harga pasar (Tahap 6)
+- [~] Prediksi harga pasar (Tahap 7)
 - [ ] Asisten tanya-jawab peternakan (Tahap 6)
 
 Keterangan: `[x]` tersedia, `[~]` sebagian, `[ ]` direncanakan.

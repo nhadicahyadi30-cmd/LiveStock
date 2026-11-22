@@ -219,7 +219,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Harga pasar",
-        "status": "planned",
+        "status": "progress",
         "phase": 3,
         "note": ""
       }
@@ -336,7 +336,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Prediksi harga pasar",
-        "status": "planned",
+        "status": "progress",
         "phase": 6,
         "note": ""
       },

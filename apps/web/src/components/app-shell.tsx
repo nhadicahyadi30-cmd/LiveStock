@@ -30,7 +30,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     { href: "/app/tugas", label: "Tugas", icon: "check" },
   ] },
   { group: "Kesehatan", items: [{ href: "/app/kesehatan", label: "Kesehatan ternak", icon: "heart" }] },
-  { group: "Marketplace", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }] },
+  { group: "Marketplace", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }, { href: "/app/harga", label: "Harga pasar", icon: "chart" }] },
   { group: "Keuangan", items: [{ href: "/app/keuangan", label: "Keuangan", icon: "coin" }] },
   { group: "Smart Ternak", items: [
     { href: "/app/iot", label: "IoT (sensor kandang)", icon: "cpu" },
@@ -146,7 +146,7 @@ function Shell({ me, children }: { me: Me; children: ReactNode }) {
       <aside className={`sidebar ${open ? "open" : ""}`} aria-label="Navigasi utama">
         <div className="sb-logo"><Link href="/app" style={{ textDecoration: "none", color: "inherit" }}><Logo /></Link></div>
         <nav className="nav">
-          {NAV.map((g) => ({ ...g, items: g.items.filter((i) => !(["/app/keuangan", "/app/pasar"].includes(i.href) && org?.role !== "OWNER" && org?.role !== "MANAGER")) })).filter((g) => g.items.length > 0).map((g) => (
+          {NAV.map((g) => ({ ...g, items: g.items.filter((i) => !(["/app/keuangan", "/app/pasar", "/app/harga"].includes(i.href) && org?.role !== "OWNER" && org?.role !== "MANAGER")) })).filter((g) => g.items.length > 0).map((g) => (
             <div className="nav-group" key={g.group}>
               <div className="nav-title">{g.group}</div>
               {g.items.map((i) => (

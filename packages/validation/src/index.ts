@@ -350,3 +350,17 @@ export const commandCreate = z.object({
   payload: z.record(z.string(), z.union([z.string().max(200), z.number(), z.boolean()])).optional(),
 });
 export const commandAck = z.object({ result: z.string().max(300).optional() });
+
+// ---- Harga pasar (tahap 7) ----
+export const PRICE_COMMODITIES = [
+  "AYAM_HIDUP", "AYAM_PEDAGING_KARKAS", "TELUR_AYAM", "SAPI_HIDUP", "KAMBING_HIDUP", "DOMBA_HIDUP",
+  "BEBEK_HIDUP", "TELUR_BEBEK", "SUSU_SAPI", "IKAN_LELE", "IKAN_NILA", "UDANG_VANAME", "PAKAN_JADI", "JAGUNG_PAKAN", "LAINNYA",
+] as const;
+export const priceCreate = z.object({
+  commodity: z.enum(PRICE_COMMODITIES),
+  unit: z.string().trim().min(1).max(20).default("kg"),
+  price: z.number().positive().max(1_000_000_000),
+  region: z.string().trim().max(80).optional(),
+  source: z.string().trim().max(80).optional(),
+  observedOn: pastOrToday,
+});
