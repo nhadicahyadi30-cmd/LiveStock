@@ -390,3 +390,20 @@ export const paymentUpsert = z.object({ method: z.enum(PAYMENT_METHODS), referen
 export const paymentAction = z
   .object({ action: z.enum(["CONFIRM_RECEIVED", "DISPUTE", "REFUND"]), reason: z.string().trim().max(300).optional() })
   .refine((v) => v.action !== "DISPUTE" || (v.reason?.length ?? 0) >= 5, { message: "Jelaskan alasan sengketa (minimal 5 huruf)", path: ["reason"] });
+
+// ---- Konsultasi dokter hewan (tahap 7) ----
+export const vetProfileUpsert = z.object({
+  displayName: z.string().trim().min(2).max(100),
+  city: z.string().trim().min(2).max(80),
+  specialty: z.string().trim().min(2).max(80),
+  licenseNo: z.string().trim().max(60).optional(),
+  about: z.string().trim().max(500).optional(),
+  accepting: z.boolean().default(true),
+});
+export const vetConsultationCreate = z.object({
+  vetOrgId: uuid,
+  subject: z.string().trim().min(3).max(120),
+  species: z.string().trim().min(2).max(60),
+  symptoms: z.string().trim().min(10, "Jelaskan gejalanya (minimal 10 huruf)").max(2000),
+});
+export const vetMessageCreate = z.object({ body: z.string().trim().min(1).max(2000) });

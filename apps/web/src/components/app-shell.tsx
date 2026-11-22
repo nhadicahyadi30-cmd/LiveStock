@@ -29,7 +29,7 @@ const NAV: { group: string; items: NavItem[] }[] = [
     { href: "/app/produksi", label: "Produksi", icon: "chart" },
     { href: "/app/tugas", label: "Tugas", icon: "check" },
   ] },
-  { group: "Kesehatan", items: [{ href: "/app/kesehatan", label: "Kesehatan ternak", icon: "heart" }] },
+  { group: "Kesehatan", items: [{ href: "/app/kesehatan", label: "Kesehatan ternak", icon: "heart" }, { href: "/app/dokter", label: "Konsultasi dokter", icon: "info" }] },
   { group: "Marketplace", items: [{ href: "/app/pasar", label: "Pasar", icon: "cart" }, { href: "/app/harga", label: "Harga pasar", icon: "chart" }] },
   { group: "Keuangan", items: [{ href: "/app/keuangan", label: "Keuangan", icon: "coin" }] },
   { group: "Smart Ternak", items: [

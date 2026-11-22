@@ -170,7 +170,7 @@ export const PILLARS: Pillar[] = [
       },
       {
         "name": "Konsultasi dokter hewan",
-        "status": "planned",
+        "status": "progress",
         "phase": 2,
         "note": ""
       }

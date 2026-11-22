@@ -868,3 +868,51 @@ model MarketPayment {
   @@index([sellerOrgId, status])
   @@map("market_payments")
 }
+
+// ---------------------------------------------------------------- Konsultasi dokter hewan
+// Profil dokter hewan bersifat publik (dibaca semua organisasi). Nomor izin diisi sendiri dan BELUM diverifikasi platform.
+model VetProfile {
+  orgId       String   @id @map("org_id") @db.Uuid
+  displayName String   @map("display_name")
+  city        String
+  specialty   String
+  licenseNo   String?  @map("license_no")
+  about       String?
+  accepting   Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("vet_profiles")
+}
+
+model VetConsultation {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  farmOrgId   String   @map("farm_org_id") @db.Uuid
+  vetOrgId    String   @map("vet_org_id") @db.Uuid
+  farmName    String   @map("farm_name")
+  subject     String
+  species     String
+  symptoms    String
+  status      String   @default("OPEN")
+  createdBy   String   @map("created_by") @db.Uuid
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([farmOrgId, updatedAt(sort: Desc)])
+  @@index([vetOrgId, status])
+  @@map("vet_consultations")
+}
+
+model VetMessage {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  consultationId String   @map("consultation_id") @db.Uuid
+  farmOrgId      String   @map("farm_org_id") @db.Uuid
+  vetOrgId       String   @map("vet_org_id") @db.Uuid
+  authorOrgId    String   @map("author_org_id") @db.Uuid
+  authorUserId   String   @map("author_user_id") @db.Uuid
+  body           String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([consultationId, createdAt])
+  @@map("vet_messages")
+}
