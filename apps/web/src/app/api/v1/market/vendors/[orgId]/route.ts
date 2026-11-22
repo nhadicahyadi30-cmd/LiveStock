@@ -22,7 +22,7 @@ export const GET = tenantRoute<{ orgId: string }>({ permission: "market.read" },
       isMe: orgId === c.organizationId,
       rating: { avg: agg._avg.rating ?? 0, count: agg._count.rating },
       reviews: reviews.map((r) => ({ id: r.id, rating: r.rating, comment: r.comment, createdAt: r.createdAt })),
-      listings: listings.map((l) => ({ id: l.id, title: l.title, category: l.category, unit: l.unit, priceIdr: Number(l.priceIdr), stock: Number(l.stock), images: imgs.get(l.id) ?? [] })),
+      listings: listings.map((l) => ({ id: l.id, attributes: l.attributes, title: l.title, category: l.category, unit: l.unit, priceIdr: Number(l.priceIdr), stock: Number(l.stock), images: imgs.get(l.id) ?? [] })),
     },
   });
 });

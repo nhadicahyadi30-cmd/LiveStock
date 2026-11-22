@@ -20,6 +20,7 @@
     "db:seed": "pnpm --filter @sl/database seed",
     "db:seed:demo": "pnpm --filter @sl/database seed:demo",
     "db:seed:photos": "pnpm --filter @sl/database seed:photos",
+    "db:seed:services": "pnpm --filter @sl/database seed:services",
     "db:setup": "pnpm db:generate && pnpm db:push && pnpm db:rls && pnpm db:seed"
   },
   "devDependencies": {

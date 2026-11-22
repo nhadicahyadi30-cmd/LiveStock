@@ -536,6 +536,9 @@ enum ListingCategory {
   MEDICINE
   EQUIPMENT
   PRODUCE
+  KURBAN
+  AQIQAH
+  SERVICE
 }
 
 enum ListingStatus {
@@ -575,6 +578,8 @@ model MarketListing {
   unit        String
   stock       Decimal         @db.Decimal(14, 3)
   status      ListingStatus   @default(DRAFT)
+  /// Rincian khusus layanan/kurban/aqiqah (jenis hewan, bobot, umur, termasuk sembelih/antar, area, bagian patungan).
+  attributes  Json?
   createdBy   String          @map("created_by") @db.Uuid
   createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -596,6 +601,8 @@ model MarketOrder {
   total        Decimal           @db.Decimal(16, 2)
   status       MarketOrderStatus @default(PENDING)
   buyerNote    String?           @map("buyer_note")
+  /// Tanggal barang/layanan dibutuhkan (pesan di muka: kurban, aqiqah, layanan).
+  neededOn     DateTime?         @map("needed_on") @db.Date
   createdBy    String            @map("created_by") @db.Uuid
   clientId     String?           @map("client_id") @db.Uuid
   createdAt    DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)

@@ -212,8 +212,21 @@ export const healthRecordComplete = z.object({ doneOn: anyDate.optional() });
 
 // ---------------------------------------------------------------- Tahap 3: Marketplace
 
-export const listingCategories = ["LIVESTOCK", "FEED", "MEDICINE", "EQUIPMENT", "PRODUCE"] as const;
-export const listingUnits = ["ekor", "kg", "butir", "liter", "karung", "paket", "unit"] as const;
+export const listingCategories = ["LIVESTOCK", "FEED", "MEDICINE", "EQUIPMENT", "PRODUCE", "KURBAN", "AQIQAH", "SERVICE"] as const;
+/** Kategori pesan di muka: pembeli wajib menyebut tanggal dibutuhkan. */
+export const PREORDER_CATEGORIES: readonly string[] = ["KURBAN", "AQIQAH", "SERVICE"];
+export const SERVICE_TYPES = ["PENYEMBELIHAN", "PEMOTONGAN_PENGEMASAN", "PENGANTARAN", "PENITIPAN", "PEMBAGIAN_DAGING", "LAINNYA"] as const;
+export const listingAttributes = z.object({
+  animal: z.enum(["SAPI", "KAMBING", "DOMBA"]).optional(),
+  weightKg: z.number().positive().max(2000).optional(),
+  ageMonths: z.number().int().min(1).max(240).optional(),
+  slaughter: z.boolean().optional(),
+  delivery: z.boolean().optional(),
+  area: z.string().trim().max(120).optional(),
+  shares: z.number().int().min(1).max(7).optional(),
+  serviceType: z.enum(SERVICE_TYPES).optional(),
+});
+export const listingUnits = ["ekor", "kg", "butir", "liter", "karung", "paket", "unit", "bagian", "layanan"] as const;
 
 export const vendorProfileUpsert = z.object({
   displayName: z.string().trim().min(2).max(100),
@@ -231,6 +244,7 @@ export const listingCreate = z.object({
   unit: z.enum(listingUnits),
   stock: z.number().nonnegative().max(100_000_000),
   status: z.enum(["DRAFT", "PUBLISHED"]).default("PUBLISHED"),
+  attributes: listingAttributes.optional(),
 });
 export type ListingCreate = z.infer<typeof listingCreate>;
 
@@ -249,6 +263,8 @@ export const marketOrderCreate = z.object({
   listingId: uuid,
   quantity: z.number().positive().max(100_000_000),
   note: z.string().trim().max(500).optional(),
+  /** Tanggal dibutuhkan (wajib untuk kurban, aqiqah, dan layanan). Format YYYY-MM-DD. */
+  neededOn: z.coerce.date().optional(),
   clientId,
 });
 

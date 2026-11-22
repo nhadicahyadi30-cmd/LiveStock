@@ -1,4 +1,4 @@
-import { marketOrderCreate } from "@sl/validation";
+import { PREORDER_CATEGORIES, marketOrderCreate } from "@sl/validation";
 import { clientIp, writeAudit } from "@/server/audit";
 import { ApiError } from "@/server/errors";
 import { notifyOrg } from "@/server/notify";
@@ -19,7 +19,7 @@ export const GET = tenantRoute({ permission: "market.read" }, async (c) => {
     data: rows.map((r) => {
       const p = prof.get(sell ? r.buyerOrgId : r.sellerOrgId);
       return {
-        id: r.id, listingTitle: r.listingTitle, unit: r.unit, status: r.status, buyerNote: r.buyerNote, createdAt: r.createdAt,
+        id: r.id, listingTitle: r.listingTitle, unit: r.unit, status: r.status, buyerNote: r.buyerNote, neededOn: r.neededOn, createdAt: r.createdAt,
         quantity: Number(r.quantity), unitPrice: Number(r.unitPrice), total: Number(r.total), reviewed: reviewed.has(r.id),
         // Kontak pihak lain hanya dibuka setelah pesanan diterima.
         counterparty: { name: p?.displayName ?? (sell ? "Pembeli" : "Penjual"), phone: r.status === "PENDING" || r.status === "REJECTED" ? null : (p?.phone ?? null) },
@@ -40,9 +40,17 @@ export const POST = tenantRoute({ permission: "market.manage" }, async (c) => {
   if (listing.sellerOrgId === c.organizationId) throw new ApiError(422, "OWN_LISTING", "Tidak bisa membeli produk sendiri");
   if (Number(listing.stock) < input.quantity) throw new ApiError(409, "INSUFFICIENT_STOCK", "Stok tidak cukup");
 
+  let neededOn: Date | null = null;
+  if (PREORDER_CATEGORIES.includes(listing.category)) {
+    if (!input.neededOn) throw new ApiError(422, "NEEDED_ON_REQUIRED", "Tanggal dibutuhkan wajib diisi untuk kurban, aqiqah, dan layanan");
+    const today = new Date(); today.setUTCHours(0, 0, 0, 0);
+    if (input.neededOn.getTime() < today.getTime()) throw new ApiError(422, "NEEDED_ON_PAST", "Tanggal dibutuhkan tidak boleh di masa lalu");
+    neededOn = input.neededOn;
+  }
+
   const total = Math.round(Number(listing.priceIdr) * input.quantity * 100) / 100;
   const order = await c.tx.marketOrder.create({
-    data: { listingId: listing.id, buyerOrgId: c.organizationId, sellerOrgId: listing.sellerOrgId, listingTitle: listing.title, unit: listing.unit, quantity: input.quantity, unitPrice: listing.priceIdr, total, buyerNote: input.note, createdBy: c.userId, clientId: input.clientId },
+    data: { listingId: listing.id, buyerOrgId: c.organizationId, sellerOrgId: listing.sellerOrgId, listingTitle: listing.title, unit: listing.unit, quantity: input.quantity, unitPrice: listing.priceIdr, total, buyerNote: input.note, neededOn, createdBy: c.userId, clientId: input.clientId },
   });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "market_order.create", entityType: "market_order", entityId: order.id, after: { total, listing: listing.title } });
   await notifyOrg(c.tx, listing.sellerOrgId, { kind: "market.order", title: `Pesanan baru: ${listing.title}`, body: `${input.quantity} ${listing.unit}, total Rp ${Math.round(total).toLocaleString("id-ID")}`, href: "/app/pasar" });

@@ -36,7 +36,7 @@ export const GET = tenantRoute({ permission: "market.read" }, async (c) => {
   const rate = new Map(ratings.map((r) => [r.sellerOrgId, { avg: r._avg.rating ?? 0, count: r._count.rating }]));
   return Response.json({
     data: rows.map((r) => ({
-      id: r.id, sellerOrgId: r.sellerOrgId, isMine: r.sellerOrgId === c.organizationId, images: images.get(r.id) ?? [], title: r.title, category: r.category, description: r.description, unit: r.unit, status: r.status,
+      id: r.id, attributes: r.attributes, sellerOrgId: r.sellerOrgId, isMine: r.sellerOrgId === c.organizationId, images: images.get(r.id) ?? [], title: r.title, category: r.category, description: r.description, unit: r.unit, status: r.status,
       priceIdr: Number(r.priceIdr), stock: Number(r.stock), createdAt: r.createdAt,
       seller: { name: prof.get(r.sellerOrgId)?.displayName ?? "Penjual", city: prof.get(r.sellerOrgId)?.city ?? "", phone: prof.get(r.sellerOrgId)?.phone ?? "", rating: rate.get(r.sellerOrgId) ?? { avg: 0, count: 0 } },
     })),
@@ -48,7 +48,7 @@ export const POST = tenantRoute({ permission: "market.manage" }, async (c) => {
   const input = listingCreate.parse(await c.req.json());
   const profile = await c.tx.vendorProfile.findUnique({ where: { orgId: c.organizationId } });
   if (!profile) throw new ApiError(409, "PROFILE_REQUIRED", "Lengkapi profil toko dulu sebelum berjualan");
-  const row = await c.tx.marketListing.create({ data: { ...input, sellerOrgId: c.organizationId, createdBy: c.userId } });
+  const row = await c.tx.marketListing.create({ data: { ...input, attributes: input.attributes ?? undefined, sellerOrgId: c.organizationId, createdBy: c.userId } });
   await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "listing.create", entityType: "listing", entityId: row.id, after: { title: row.title } });
   return Response.json({ data: { ...row, priceIdr: Number(row.priceIdr), stock: Number(row.stock) } }, { status: 201 });
 });

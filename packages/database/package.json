@@ -17,6 +17,7 @@
     "seed": "node scripts/with-env.mjs tsx prisma/seed.ts",
     "seed:demo": "node scripts/with-env.mjs tsx prisma/seed-demo.ts",
     "seed:photos": "node scripts/with-env.mjs tsx prisma/seed-photos.ts",
+    "seed:services": "node scripts/with-env.mjs tsx prisma/seed-services.ts",
     "typecheck": "tsc --noEmit",
     "test": "node scripts/with-env.mjs vitest run"
   },

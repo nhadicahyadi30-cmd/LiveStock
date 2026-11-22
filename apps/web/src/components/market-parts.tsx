@@ -3,12 +3,36 @@ import { useCallback, useEffect, useState } from "react";
 import { Modal, Skeleton, fmt, fmtDate, useToast } from "@/components/ui";
 import { api, ApiFailure } from "@/lib/api";
 
-export const CAT: Record<string, string> = { LIVESTOCK: "Ternak", FEED: "Pakan", MEDICINE: "Obat & vitamin", EQUIPMENT: "Peralatan", PRODUCE: "Hasil ternak" };
+export const CAT: Record<string, string> = { LIVESTOCK: "Ternak", FEED: "Pakan", MEDICINE: "Obat & vitamin", EQUIPMENT: "Peralatan", PRODUCE: "Hasil ternak", KURBAN: "Kurban", AQIQAH: "Aqiqah", SERVICE: "Layanan" };
+/** Kategori pesan di muka (butuh tanggal dibutuhkan). */
+export const PREORDER = ["KURBAN", "AQIQAH", "SERVICE"];
+export const ANIMALS: Record<string, string> = { SAPI: "Sapi", KAMBING: "Kambing", DOMBA: "Domba" };
+export const SERVICE_TYPES: Record<string, string> = { PENYEMBELIHAN: "Penyembelihan", PEMOTONGAN_PENGEMASAN: "Pemotongan dan pengemasan", PENGANTARAN: "Pengantaran", PENITIPAN: "Penitipan hewan", PEMBAGIAN_DAGING: "Pembagian daging", LAINNYA: "Lainnya" };
+export interface ListingAttrs { animal?: string; weightKg?: number; ageMonths?: number; slaughter?: boolean; delivery?: boolean; area?: string; shares?: number; serviceType?: string }
+
+/** Ringkasan rincian kurban/aqiqah/layanan sebagai daftar label pendek. */
+export function attrLabels(a: ListingAttrs | null | undefined): string[] {
+  if (!a) return [];
+  const out: string[] = [];
+  if (a.serviceType) out.push(SERVICE_TYPES[a.serviceType] ?? a.serviceType);
+  if (a.animal) out.push(ANIMALS[a.animal] ?? a.animal);
+  if (a.weightKg) out.push(`± ${fmt(a.weightKg)} kg`);
+  if (a.ageMonths) out.push(`${a.ageMonths} bulan`);
+  if (a.shares && a.shares > 1) out.push(`Patungan 1/${a.shares}`);
+  if (a.slaughter) out.push("Termasuk penyembelihan");
+  if (a.delivery) out.push("Bisa diantar");
+  if (a.area) out.push(`Area: ${a.area}`);
+  return out;
+}
+export function AttrChips({ attrs }: { attrs: ListingAttrs | null | undefined }) {
+  const l = attrLabels(attrs);
+  return l.length ? <div className="row" style={{ gap: 4, flexWrap: "wrap" }}>{l.map((x) => <span key={x} className="badge">{x}</span>)}</div> : null;
+}
 export const rp = (n: number) => `Rp ${fmt(Math.round(n))}`;
 export const wa = (p: string) => `https://wa.me/${p.replace(/[^0-9]/g, "").replace(/^0/, "62")}`;
 export const MAX_PHOTOS = 4;
 
-export interface MarketListingLite { id: string; title: string; category: string; unit: string; priceIdr: number; stock: number; images: string[] }
+export interface MarketListingLite { id: string; attributes?: ListingAttrs | null; title: string; category: string; unit: string; priceIdr: number; stock: number; images: string[] }
 
 /** Mengecilkan foto di peramban (maks. 1200 px, JPEG) agar di bawah 700 KB sebelum diunggah. */
 export async function shrinkImage(file: File): Promise<Blob> {
@@ -92,12 +116,14 @@ export function ProductModal({ p, onClose, onOrder, onSeller }: { p: ProductDeta
         <Photo id={p.images[i]} alt={p.title} ratio="4 / 3" />
         {p.images.length > 1 && <div className="row" style={{ gap: 6 }}>{p.images.map((id, k) => <button key={id} type="button" onClick={() => setI(k)} aria-label={`Foto ${k + 1}`} style={{ width: 64, padding: 0, border: k === i ? "2px solid var(--brand, #1a6b3c)" : "2px solid transparent", borderRadius: 8, background: "none", cursor: "pointer" }}><Photo id={id} alt="" radius={6} /></button>)}</div>}
         <span className="badge" style={{ alignSelf: "flex-start" }}>{CAT[p.category]}</span>
+        <AttrChips attrs={p.attributes} />
         <div style={{ fontSize: 24, fontWeight: 700 }}>{rp(p.priceIdr)} <span className="muted sm">/ {p.unit}</span></div>
         <div className="sm muted">Stok {fmt(p.stock)} {p.unit}</div>
         {p.description && <p className="sm">{p.description}</p>}
         <button type="button" onClick={onSeller} className="sm" style={{ textAlign: "left", background: "none", border: "1px solid var(--line, #e5e7eb)", borderRadius: 12, padding: 12, cursor: "pointer" }}>
           <b>{p.seller.name}</b>{p.seller.city ? `, ${p.seller.city}` : ""}<br /><span className="xs"><Stars {...p.seller.rating} /> · Lihat profil dan produk lainnya →</span>
         </button>
+        {PREORDER.includes(p.category) && <div className="alert">Pesan di muka: Anda akan memilih tanggal dibutuhkan saat memesan.</div>}
         {p.isMine ? <div className="alert">Ini produk milik tokomu.</div> : <button className="btn btn-primary btn-block" onClick={onOrder}>Pesan</button>}
       </div>
     </Modal>

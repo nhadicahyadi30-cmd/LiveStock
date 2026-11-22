@@ -122,3 +122,13 @@ curl -X POST http://localhost:3000/api/operator/financing/applications `
   -H "x-operator-token: <TOKEN>" -H "content-type: application/json" `
   -d '{"organizationId":"<id>","applicationId":"<id>","status":"APPROVED","partnerNote":"Survei lokasi minggu depan"}'
 ```
+
+## Layanan di Pasar: Kurban, Aqiqah, dan Layanan lain
+
+Bagian dari modul Marketplace. Penjual memilih kategori **Kurban**, **Aqiqah**, atau **Layanan** saat menambah produk:
+- Kurban/Aqiqah: jenis hewan, perkiraan bobot, umur, termasuk penyembelihan, bisa diantar, area, dan (khusus kurban) jumlah bagian patungan 1-7.
+- Layanan: penyembelihan, pemotongan dan pengemasan, pengantaran, penitipan, pembagian daging.
+- Patungan: buat produk dengan satuan "bagian", stok = jumlah bagian tersisa, harga per bagian. Nama peserta ditulis di catatan pesanan.
+- Pesan di muka: untuk ketiga kategori ini pembeli wajib mengisi tanggal dibutuhkan (tidak boleh di masa lalu); tanggalnya tampil di daftar pesanan.
+- Alur pesanan, pengiriman, escrow manual, dan ulasan sama dengan produk lain.
+Belum ada: penjadwalan slot per hari, daftar peserta patungan terstruktur, surat keterangan kesehatan hewan, laporan/dokumentasi penyembelihan.
