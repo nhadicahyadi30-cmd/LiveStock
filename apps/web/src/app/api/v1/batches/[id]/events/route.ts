@@ -1,3 +1,4 @@
+import { can } from "@sl/permissions";
 import { batchEventCreate, batchEventDelta, uuid } from "@sl/validation";
 import { ApiError } from "@/server/errors";
 import { clientIp, writeAudit } from "@/server/audit";
@@ -18,6 +19,11 @@ export const POST = tenantRoute<{ id: string }>({ permission: "livestock.write" 
     if (existing) return Response.json({ data: existing }, { status: 200 });
   }
 
+  // Harga jual mencatat pemasukan di Keuangan: hanya untuk peran dengan izin keuangan dan akses semua farm.
+  if (input.totalPrice !== undefined && (!can(c.role, "finance.manage") || c.allowedFarmIds !== null)) {
+    throw new ApiError(403, "FORBIDDEN", "Mencatat harga jual butuh izin keuangan. Kosongkan harga, lalu catat pemasukan lewat Keuangan.");
+  }
+
   const pop = await c.tx.$queryRaw<{ current_count: bigint }[]>`SELECT current_count FROM batch_population WHERE batch_id = ${batchId}::uuid`;
   const current = Number(pop[0]?.current_count ?? 0);
   const delta = batchEventDelta(input);
@@ -33,5 +39,10 @@ export const POST = tenantRoute<{ id: string }>({ permission: "livestock.write" 
     { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) },
     { action: "batch_event.create", entityType: "batch_event", entityId: event.id, after: { type: input.eventType, delta } },
   );
+  if (input.totalPrice !== undefined) {
+    const batch = await c.tx.livestockBatch.findUnique({ where: { organizationId_id: { organizationId: c.organizationId, id: batchId } }, select: { code: true } });
+    const fe = await c.tx.financeEntry.create({ data: { organizationId: c.organizationId, kind: "INCOME", category: "PENJUALAN_TERNAK", amount: input.totalPrice, occurredOn: input.occurredOn, batchId, description: `Penjualan ${input.count} ekor ${batch?.code ?? ""}`.trim(), recordedBy: c.userId, clientId: input.clientId ?? null } });
+    await writeAudit(c.tx, { organizationId: c.organizationId, actorId: c.userId, ipAddress: clientIp(c.req) }, { action: "finance_entry.create", entityType: "finance_entry", entityId: fe.id, after: { kind: "INCOME", category: "PENJUALAN_TERNAK", amount: input.totalPrice, via: "batch_event" } });
+  }
   return Response.json({ data: event }, { status: 201 });
 });

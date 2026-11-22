@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { Line } from "@/components/charts";
 import { Icon } from "@/components/icons";
 import { Empty, Modal, Skeleton, Spinner, fmt, fmtDate, useToast } from "@/components/ui";
+import { useMe } from "@/components/app-shell";
 import { api, ApiFailure } from "@/lib/api";
 
 interface Weight { id: string; measuredOn: string; weightKg: number; sampleSize: number | null; voidedAt: string | null; voidReason: string | null }
@@ -37,12 +38,16 @@ export default function BatchDetailPage() {
     finally { setBusy(false); }
   }
 
+  const me = useMe();
+  const myRole = me?.organizations.find((o) => o.id === me.activeOrganizationId)?.role;
+  const canPrice = myRole === "OWNER" || myRole === "MANAGER";
+
   async function move(e: FormEvent<HTMLFormElement>) {
     e.preventDefault(); setBusy(true); setErr(null);
     const f = new FormData(e.currentTarget);
     const eventType = String(f.get("eventType"));
     try {
-      await api(`/batches/${id}/events`, { body: { eventType, count: Number(f.get("count")), occurredOn: f.get("date"), note: f.get("note") || undefined, ...(eventType === "ADJUSTMENT" ? { increase: f.get("direction") === "up" } : {}), clientId: crypto.randomUUID() } });
+      await api(`/batches/${id}/events`, { body: { eventType, count: Number(f.get("count")), occurredOn: f.get("date"), note: f.get("note") || undefined, ...(eventType === "ADJUSTMENT" ? { increase: f.get("direction") === "up" } : {}), ...(eventType === "SOLD" && Number(f.get("price")) > 0 ? { totalPrice: Number(f.get("price")) } : {}), clientId: crypto.randomUUID() } });
       setMoveOpen(false); toast({ kind: "ok", title: "Perpindahan populasi dicatat" }); await load();
     } catch (x) { setErr(x instanceof ApiFailure ? x.message : "Gagal menyimpan"); } finally { setBusy(false); }
   }
@@ -103,6 +108,7 @@ export default function BatchDetailPage() {
               <div className="field"><label htmlFor="date">Tanggal</label><input id="date" name="date" type="date" className="input" defaultValue={new Date().toLocaleDateString("sv-SE")} required /></div>
               <div className="field"><label htmlFor="direction">Arah (khusus koreksi)</label><select id="direction" name="direction" className="input" defaultValue="down"><option value="down">Mengurangi</option><option value="up">Menambah</option></select></div>
             </div>
+            {canPrice && <div className="field"><label htmlFor="price">Total harga jual (Rp, khusus penjualan)</label><input id="price" name="price" type="number" inputMode="numeric" min="0" className="input" placeholder="opsional; bila diisi, pemasukan otomatis tercatat di Keuangan" /></div>}
             <div className="field"><label htmlFor="note">Catatan</label><input id="note" name="note" className="input" maxLength={500} placeholder="opsional" /></div>
             {err && <div className="alert err" role="alert">{err}</div>}
             <button type="submit" className="btn btn-primary btn-block" disabled={busy}>{busy ? "Menyimpan…" : "Simpan"}</button>

@@ -135,11 +135,17 @@ export const batchEventCreate = z
     increase: z.boolean().optional(),
     occurredOn: pastOrToday,
     note: z.string().trim().max(500).optional(),
+    /** Hanya untuk SOLD: total harga jual (Rp). Bila diisi, pemasukan otomatis dicatat di Keuangan. */
+    totalPrice: z.number().positive().max(1_000_000_000_000).optional(),
     clientId,
   })
   .refine((v) => v.eventType !== "ADJUSTMENT" || v.increase !== undefined, {
     message: "Koreksi harus menyebut menambah atau mengurangi",
     path: ["increase"],
+  })
+  .refine((v) => v.totalPrice === undefined || v.eventType === "SOLD", {
+    message: "Harga jual hanya untuk penjualan",
+    path: ["totalPrice"],
   });
 export type BatchEventCreate = z.infer<typeof batchEventCreate>;
 
